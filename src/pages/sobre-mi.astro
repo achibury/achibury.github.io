@@ -9,7 +9,21 @@
  * empieza con REEMPLAZAR, justo encima del bloque correspondiente.
  * Esos comentarios NO se publican: quedan solo en el código fuente.
  */
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import Base from '../layouts/Base.astro';
+
+/**
+ * ¿Existe public/cv.pdf?
+ *
+ * Este codigo corre UNA vez, durante `npm run build`, no en el navegador
+ * de quien visita el sitio. Si el archivo no esta, la seccion completa
+ * del curriculum no se genera: es preferible a publicar un boton que
+ * lleva a un error 404.
+ *
+ * Para activarla: deja tu PDF en public/cv.pdf y vuelve a compilar.
+ */
+const hayCV = existsSync(path.join(process.cwd(), 'public', 'cv.pdf'));
 ---
 
 <Base
@@ -120,23 +134,29 @@ import Base from '../layouts/Base.astro';
     </section>
 
     {/* ================= CURRÍCULUM ================= */}
-    <section class="seccion">
-      <h2 class="titulo-seccion">Currículum</h2>
+    {/* Esta seccion entera aparece SOLO si existe public/cv.pdf.
+        Mientras no dejes el archivo ahi, la pagina se publica sin ella y
+        nadie ve un boton roto. No hay que tocar nada de codigo: dejas el
+        PDF, compilas, y aparece.
 
-      {/* REEMPLAZAR: el archivo en sí. El enlace ya apunta a /cv.pdf, así
-          que solo tienes que dejar tu PDF en public/cv.pdf y se sirve
-          solo. Mientras el archivo no exista, este botón da error 404.
-
-          Antes de subirlo: revisa que el PDF no traiga tu dirección
-          particular, tu RUT ni tu teléfono, si no quieres que queden
-          públicos e indexables. */}
-      <p class="texto-suave">
-        Versión completa en PDF, con experiencia y detalle de formación.
-      </p>
-      <p>
-        <a class="boton" href="/cv.pdf" download>Descargar CV (PDF)</a>
-      </p>
-    </section>
+        Antes de subirlo: revisa que el PDF no traiga tu direccion
+        particular, tu RUT ni tu telefono, si no quieres que queden
+        publicos e indexables. */}
+    {
+      hayCV && (
+        <section class="seccion">
+          <h2 class="titulo-seccion">Currículum</h2>
+          <p class="texto-suave">
+            Versión completa en PDF, con experiencia y detalle de formación.
+          </p>
+          <p>
+            <a class="boton" href="/cv.pdf" download>
+              Descargar CV (PDF)
+            </a>
+          </p>
+        </section>
+      )
+    }
 
     {/* ================= CONTACTO ================= */}
     <section class="seccion">

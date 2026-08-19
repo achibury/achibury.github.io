@@ -12,7 +12,7 @@ mitre_attack:
   - T1547.001
 funcion:
   - responder
-borrador: false
+borrador: true
 ---
 
 > **Contenido de ejemplo.** Todo lo que sigue es ficticio y está acá para

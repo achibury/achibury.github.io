@@ -27,8 +27,10 @@ const tituloCompleto = `${titulo} · Benjamin Achibury`;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Monograma BA en public/favicon.svg. Se sirve solo el SVG: un
+         .ico aparte seria otro archivo que mantener sincronizado, y todos
+         los navegadores en uso soportan favicons en SVG. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
 
     <title>{tituloCompleto}</title>

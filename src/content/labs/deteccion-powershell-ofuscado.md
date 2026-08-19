@@ -13,7 +13,7 @@ mitre_attack:
   - T1027
 funcion:
   - detectar
-borrador: false
+borrador: true
 ---
 
 > **Contenido de ejemplo.** Todo lo que sigue es ficticio y está acá para

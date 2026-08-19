@@ -241,15 +241,25 @@ code {
   font-size: 0.875em;
 }
 
-/* Código dentro de un párrafo (`así`). */
+/* Código dentro de un párrafo (`así`).
+   Este SÍ se envuelve: es texto corrido, y partirlo en el salto de
+   línea no rompe nada. La regla de abajo, para bloques, es la contraria. */
 :not(pre) > code {
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: 4px;
   padding: 0.1em 0.35em;
+  overflow-wrap: break-word;
 }
 
-/* Bloque de código completo. Shiki le pone la clase .astro-code. */
+/* --- Bloques de código ---
+   Shiki les pone la clase .astro-code y, además, tabindex="0", así que
+   se puede entrar con el teclado y desplazarlos con las flechas.
+
+   No se envuelven a propósito (ver `wrap: false` en astro.config.mjs):
+   una salida tabular partida en dos renglones deja de leerse como tabla.
+   El precio es que hay que deslizar, y por eso la barra de scroll de más
+   abajo se fuerza a estar siempre visible. */
 pre.astro-code {
   padding: var(--e-4);
   border: 1px solid var(--borde);
@@ -258,6 +268,40 @@ pre.astro-code {
   font-size: 0.875rem;
   line-height: 1.6;
   tab-size: 2;
+
+  /* Barra de scroll fina y siempre dibujada (Firefox). */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(125, 138, 158, 0.6) transparent;
+}
+
+/* Conserva el formato original del bloque. Sin esto, una línea larga se
+   partiría y la cabecera de una tabla dejaría de alinearse con sus filas. */
+pre.astro-code code {
+  white-space: pre;
+}
+
+/* Barra de scroll siempre visible (Chrome, Edge, Safari).
+   Por defecto macOS e iOS la ocultan hasta que alguien desliza, o sea que
+   el usuario no tiene forma de saber que hay más contenido a la derecha.
+   Estas reglas la dejan dibujada de forma permanente.
+
+   El gris translucido se ve bien sobre el fondo claro y sobre el oscuro,
+   así que no hace falta duplicar la regla por tema. */
+pre.astro-code::-webkit-scrollbar {
+  height: 10px;
+}
+
+pre.astro-code::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+pre.astro-code::-webkit-scrollbar-thumb {
+  background: rgba(125, 138, 158, 0.6);
+  border-radius: 999px;
+}
+
+pre.astro-code::-webkit-scrollbar-thumb:hover {
+  background: rgba(125, 138, 158, 0.9);
 }
 
 /* Activa la paleta oscura de Shiki. Los colores del tema claro vienen
