@@ -31,6 +31,9 @@ export const HERRAMIENTAS = [
   'Wireshark',
   'YARA',
   'Zeek',
+  'PNETLab',
+  'Wireshark',
+  'rsyslog',
 ] as const;
 
 export type Herramienta = (typeof HERRAMIENTAS)[number];

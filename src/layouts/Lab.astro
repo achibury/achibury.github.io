@@ -46,7 +46,7 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
         /* Las dos listas solo aparecen si el frontmatter las trae.
            Un lab sin técnicas MITRE no muestra un bloque vacío. */
         herramientas.length > 0 && (
-          <div class="cabecera__grupo">
+          <div class="cabecera__grupo cabecera__grupo--herramientas">
             <h2 class="titulo-seccion">Herramientas</h2>
             <ul class="lista-etiquetas">
               {herramientas.map((h) => (
@@ -64,7 +64,7 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
            mirar su largo: sin esa guarda, un lab que no los declara
            reventaria al construir la pagina. */
         mitre_attack && mitre_attack.length > 0 && (
-          <div class="cabecera__grupo">
+          <div class="cabecera__grupo cabecera__grupo--mitre">
             <h2 class="titulo-seccion">MITRE ATT&CK</h2>
             <ul class="lista-etiquetas">
               {mitre_attack.map((t) => (
@@ -77,7 +77,7 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
 
       {
         funcion && funcion.length > 0 && (
-          <div class="cabecera__grupo">
+          <div class="cabecera__grupo cabecera__grupo--funcion">
             <h2 class="titulo-seccion">Función</h2>
             <ul class="lista-etiquetas">
               {funcion.map((f) => (
@@ -114,15 +114,48 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
 
   .cabecera__resumen {
     margin-top: var(--e-3);
-    font-size: 1.0625rem;
+    font-size: var(--t-md);
   }
 
+  /* --- Grupos de etiquetas ---
+     Cada grupo (rótulo + chips) tiene que leerse como UNA unidad. Para
+     eso el rótulo va pegado a sus chips (margen chico abajo) y el aire
+     grande se reserva para separar un grupo del siguiente. El borde
+     izquierdo ata las dos líneas entre sí y, de paso, distingue los
+     grupos por color. */
   .cabecera__grupo {
-    margin-top: var(--e-6);
+    margin-top: var(--e-8);
+    padding-left: var(--e-3);
+    border-left: 2px solid var(--borde);
   }
 
   .cabecera__grupo .titulo-seccion {
     margin-bottom: var(--e-2);
+  }
+
+  /* Los tres grupos se distinguen por color Y por trazo, no solo por
+     color. Hay dos razones concretas:
+
+       1. En modo oscuro el acento (#5eead4) y el texto principal
+          (#e2e8f0) quedan a 1.20:1 de contraste entre sí: dos barras de
+          2px con esos colores se verían prácticamente iguales. Medido,
+          no supuesto.
+       2. Confiar solo en el color deja fuera a quien no distingue tonos.
+
+     De ahí la combinación: acento sólido / neutro sólido / neutro
+     punteado. Se leen distinto en los dos modos y sin depender de la
+     percepción del color. */
+  .cabecera__grupo--herramientas {
+    border-left-color: var(--acento);
+  }
+
+  .cabecera__grupo--mitre {
+    border-left-color: var(--texto-suave);
+  }
+
+  .cabecera__grupo--funcion {
+    border-left-style: dashed;
+    border-left-color: var(--texto-suave);
   }
 
   .aviso {
@@ -132,14 +165,14 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
     border-radius: var(--radio);
     background: var(--superficie);
     color: var(--texto-suave);
-    font-size: 0.875rem;
+    font-size: var(--t-sm);
   }
 
   .volver {
     margin-top: var(--e-16);
     padding-top: var(--e-6);
     border-top: 1px solid var(--borde);
-    font-size: 0.9375rem;
+    font-size: var(--t-sm);
   }
 
   /* --- Contenido del lab (el HTML que sale del Markdown) ---
@@ -148,14 +181,49 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
      clases automáticas de Astro. Está acotado a .prosa, o sea que no
      se escapa al resto del sitio. */
 
+  /* --- Encabezados de sección del lab ---
+     Dos señales combinadas para que el corte entre secciones se vea sin
+     necesidad de leer:
+
+       1. Margen de arriba varias veces mayor que el de abajo (los
+          valores viven en global.css, bloque "Ritmo de encabezados").
+          El h2 se despega de la sección anterior y se pega a la suya.
+       2. Una línea fina por encima del h2, del mismo gris que el resto
+          de los bordes del sitio.
+
+     El h3 usa solo la asimetría, sin línea: así queda claro de un
+     vistazo que es un nivel por debajo y no otro corte de sección. */
   .prosa :global(h2) {
-    margin-top: var(--e-12);
-    margin-bottom: var(--e-4);
+    margin-top: var(--h2-arriba);
+    margin-bottom: var(--h2-abajo);
+    padding-top: var(--h2-aire-linea);
+    border-top: 1px solid var(--borde);
+  }
+
+  /* El primer encabezado no necesita separarse de nada: viene justo
+     después de la cabecera del lab, que ya trae su propia línea. */
+  .prosa > :global(h2:first-child) {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
   }
 
   .prosa :global(h3) {
-    margin-top: var(--e-8);
-    margin-bottom: var(--e-3);
+    margin-top: var(--h3-arriba);
+    margin-bottom: var(--h3-abajo);
+  }
+
+  /* Lo que va justo debajo de un encabezado no aporta su propio margen
+     de arriba.
+
+     Sin esta regla, los margenes verticales de elementos hermanos se
+     fusionan y gana el mas grande: el margen de abajo del h3 (8px) queda
+     tapado por el de arriba del parrafo (16px), y la asimetria que da
+     legibilidad se pierde justo donde mas importa. Asi el unico gap que
+     manda es el del encabezado. */
+  .prosa :global(h2 + *),
+  .prosa :global(h3 + *) {
+    margin-top: 0;
   }
 
   .prosa :global(p),
@@ -196,7 +264,7 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
   .prosa :global(img + em) {
     display: block;
     margin-top: var(--e-2);
-    font-size: 0.875rem;
+    font-size: var(--t-sm);
     color: var(--texto-suave);
   }
 
@@ -217,7 +285,7 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
     width: 100%;
     border-collapse: collapse;
     margin-block: var(--e-6);
-    font-size: 0.9375rem;
+    font-size: var(--t-sm);
   }
 
   .prosa :global(th),

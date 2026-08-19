@@ -41,13 +41,27 @@ const { titulo, resumen, fecha, categoria, borrador } = lab.data;
 </article>
 
 <style>
+  /* --- Ritmo de la tarjeta ---
+     Las tres líneas (metadatos, título, resumen) van muy juntas entre sí
+     y la tarjeta entera lleva mucho aire arriba y abajo. Esa diferencia
+     (0.5rem adentro contra 2rem afuera, cuatro veces más) es lo que hace
+     que las tres se lean como una unidad y no como tres líneas sueltas
+     de una lista continua.
+
+     La línea superior marca dónde empieza cada entrada. */
   .tarjeta {
     position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--e-2);
-    padding-block: var(--e-6);
+    padding-block: var(--e-8);
     border-top: 1px solid var(--borde);
+  }
+
+  /* Cierra la última entrada: sin esto el listado queda abierto abajo y
+     no se ve dónde termina. */
+  .tarjeta:last-child {
+    border-bottom: 1px solid var(--borde);
   }
 
   .tarjeta__meta {

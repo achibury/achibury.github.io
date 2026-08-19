@@ -1,6 +1,6 @@
 /* ==========================================================================
    TOKENS DE DISEÑO
-   Todo el color, el espaciado, la tipografía y los anchos del sitio salen
+   Todo el color, la tipografía, el espaciado y los anchos del sitio salen
    de acá. Para reestilizar el portafolio más adelante, en el 90% de los
    casos basta con cambiar valores en este bloque y no tocar ningún
    componente.
@@ -18,7 +18,16 @@
   --texto: #0f172a;
   --texto-suave: #475569;
   --acento: #0f766e;
-  --acento-fondo: #f0fdfa;
+  --acento-fondo: #e6fbf6;
+
+  /* Chips (categoría, herramientas, MITRE, función).
+     Más oscuros que --superficie a propósito: como son cajas chicas
+     rodeadas de texto, con muy poco contraste dejan de leerse como
+     elementos definidos y parecen manchas. Verificado 8.80:1 del texto
+     contra su fondo, muy por encima del mínimo 4.5:1. */
+  --chip-fondo: #e8edf4;
+  --chip-borde: #a8b8cc;
+  --chip-texto: #334155;
 
   /* --- Tipografía ---
      Fuentes del sistema: cargan instantáneo y no dependen de terceros.
@@ -28,17 +37,26 @@
   --fuente-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas,
     'Liberation Mono', Menlo, monospace;
 
-  /* --- Anchos ---
-     Dos medidas, y todo el sitio sale de estas dos.
+  /* --- Escala tipográfica ---
+     Un solo lugar para todos los tamaños de texto del sitio.
 
-     --ancho-prosa limita el texto corrido. La unidad `ch` equivale al
-     ancho del carácter "0", así que 70ch ≈ 70 caracteres por línea, que
-     es el rango donde el ojo lee cómodo sin perder el renglón.
+     Los saltos entre niveles son amplios a propósito. Si h2, h3 y cuerpo
+     se diferencian poco, el ojo no los lee como tres niveles distintos
+     sino como variaciones del mismo, y la estructura del lab se pierde.
+     Acá van 28px / 21px / 16px: cada nivel es ~1.3 veces el siguiente. */
+  --t-xs: 0.75rem; /* rótulos en versalitas */
+  --t-sm: 0.875rem; /* metadatos, navegación, pie */
+  --t-base: 1rem; /* cuerpo */
+  --t-md: 1.125rem; /* entradilla */
+  --t-lg: 1.3125rem; /* h3 */
+  --t-xl: 1.75rem; /* h2 */
+  --t-2xl: 2.25rem; /* h1 */
 
-     --ancho-contenedor es el marco general: header, footer, listados y
-     los bloques anchos (código, imágenes, tablas) dentro de un lab. */
-  --ancho-prosa: 70ch;
-  --ancho-contenedor: 1120px;
+  /* Código. Va en em (no en rem) para que se adapte al contexto donde
+     esté. Las monoespaciadas se ven más grandes que una sans al mismo
+     tamaño nominal, así que necesitan bajar un poco; 0.9 compensa sin
+     llegar a dejarlas notoriamente más chicas que el texto. */
+  --t-mono: 0.9em;
 
   /* --- Escala de espaciado ---
      Usar siempre estas variables en vez de píxeles sueltos mantiene el
@@ -49,9 +67,34 @@
   --e-4: 1rem;
   --e-6: 1.5rem;
   --e-8: 2rem;
+  --e-10: 2.5rem;
   --e-12: 3rem;
   --e-16: 4rem;
   --e-24: 6rem;
+
+  /* --- Ritmo de encabezados ---
+     Deliberadamente asimétrico: mucho más aire ARRIBA que abajo.
+
+     Es el mecanismo central de esta hoja de estilos. Un encabezado con
+     el mismo margen de los dos lados flota entre dos bloques y no se
+     sabe a cuál pertenece. Con el margen de arriba varias veces mayor,
+     el encabezado se despega de la sección anterior y se pega a su
+     propio contenido: ahí es donde se ve el corte de sección. */
+  --h2-arriba: var(--e-12);
+  --h2-abajo: var(--e-4);
+  --h2-aire-linea: var(--e-6); /* entre la línea separadora y el texto */
+  --h3-arriba: var(--e-10);
+  --h3-abajo: var(--e-2);
+
+  /* --- Anchos ---
+     --ancho-prosa limita el texto corrido. La unidad ch equivale al
+     ancho del carácter cero, así que 70ch son ~70 caracteres por línea,
+     el rango donde el ojo lee cómodo sin perder el renglón.
+
+     --ancho-contenedor es el marco general: header, footer, listados y
+     los bloques anchos (código, imágenes, tablas) dentro de un lab. */
+  --ancho-prosa: 70ch;
+  --ancho-contenedor: 1120px;
 
   --radio: 6px;
 }
@@ -68,6 +111,11 @@
     --texto-suave: #94a3b8;
     --acento: #5eead4;
     --acento-fondo: #134e4a;
+
+    /* Verificado 8.88:1 del texto contra su fondo. */
+    --chip-fondo: #2c3a4f;
+    --chip-borde: #55677f;
+    --chip-texto: #dbe3ec;
   }
 }
 
@@ -86,7 +134,7 @@ body {
   background: var(--fondo);
   color: var(--texto);
   font-family: var(--fuente);
-  font-size: 1rem;
+  font-size: var(--t-base);
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
 }
@@ -102,13 +150,13 @@ h3 {
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: var(--t-2xl);
 }
 h2 {
-  font-size: 1.375rem;
+  font-size: var(--t-xl);
 }
 h3 {
-  font-size: 1.125rem;
+  font-size: var(--t-lg);
 }
 
 p {
@@ -164,8 +212,8 @@ img {
 }
 
 /* Medida de lectura.
-   Dentro de <main>, el texto corrido se limita a ~70 caracteres por
-   línea aunque el contenedor sea mucho más ancho. Se aplica solo a los
+   Dentro de main, el texto corrido se limita a ~70 caracteres por línea
+   aunque el contenedor sea mucho más ancho. Se aplica solo a los
    elementos de texto: lo que NO está en esta lista (pre, img, table)
    queda libre y puede llegar hasta el ancho del contenedor.
 
@@ -186,7 +234,7 @@ main :is(p, h1, h2, h3, ul, ol, blockquote, dl) {
 
 /* Título chico en versalitas que encabeza una sección ("Últimos labs"). */
 .titulo-seccion {
-  font-size: 0.75rem;
+  font-size: var(--t-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -194,16 +242,16 @@ main :is(p, h1, h2, h3, ul, ol, blockquote, dl) {
   margin: 0 0 var(--e-6);
 }
 
-/* Píldora chica: categoría, herramientas, técnicas MITRE. */
+/* Píldora chica: categoría, herramientas, técnicas MITRE, función. */
 .etiqueta {
   display: inline-block;
-  font-size: 0.75rem;
+  font-size: var(--t-xs);
   line-height: 1.5;
   padding: var(--e-1) var(--e-2);
-  border: 1px solid var(--borde);
+  border: 1px solid var(--chip-borde);
   border-radius: var(--radio);
-  color: var(--texto-suave);
-  background: var(--superficie);
+  color: var(--chip-texto);
+  background: var(--chip-fondo);
 }
 
 /* Variante con acento. Usada SOLO para la categoría del lab: es el
@@ -228,7 +276,7 @@ main :is(p, h1, h2, h3, ul, ol, blockquote, dl) {
 }
 
 .meta {
-  font-size: 0.875rem;
+  font-size: var(--t-sm);
   color: var(--texto-suave);
 }
 
@@ -238,12 +286,12 @@ main :is(p, h1, h2, h3, ul, ol, blockquote, dl) {
 
 code {
   font-family: var(--fuente-mono);
-  font-size: 0.875em;
+  font-size: var(--t-mono);
 }
 
-/* Código dentro de un párrafo (`así`).
+/* Código dentro de un párrafo, entre comillas simples invertidas.
    Este SÍ se envuelve: es texto corrido, y partirlo en el salto de
-   línea no rompe nada. La regla de abajo, para bloques, es la contraria. */
+   línea no rompe nada. La regla de los bloques es la contraria. */
 :not(pre) > code {
   background: var(--superficie);
   border: 1px solid var(--borde);
@@ -256,7 +304,7 @@ code {
    Shiki les pone la clase .astro-code y, además, tabindex="0", así que
    se puede entrar con el teclado y desplazarlos con las flechas.
 
-   No se envuelven a propósito (ver `wrap: false` en astro.config.mjs):
+   No se envuelven a propósito (ver wrap: false en astro.config.mjs):
    una salida tabular partida en dos renglones deja de leerse como tabla.
    El precio es que hay que deslizar, y por eso la barra de scroll de más
    abajo se fuerza a estar siempre visible. */
@@ -265,8 +313,8 @@ pre.astro-code {
   border: 1px solid var(--borde);
   border-radius: var(--radio);
   overflow-x: auto;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  font-size: var(--t-mono);
+  line-height: 1.65;
   tab-size: 2;
 
   /* Barra de scroll fina y siempre dibujada (Firefox). */
@@ -274,9 +322,15 @@ pre.astro-code {
   scrollbar-color: rgba(125, 138, 158, 0.6) transparent;
 }
 
-/* Conserva el formato original del bloque. Sin esto, una línea larga se
-   partiría y la cabecera de una tabla dejaría de alinearse con sus filas. */
+/* El code que va DENTRO del bloque no vuelve a encoger, y conserva el
+   formato original de la salida.
+
+   Lo del tamaño es un error fácil de cometer: sin font-size: 1em el
+   factor se aplica dos veces, una del pre y otra del code que lleva
+   adentro, y el bloque termina en 16 x 0.9 x 0.9 = 12.9px en vez de
+   los 14.4px que corresponden. */
 pre.astro-code code {
+  font-size: 1em;
   white-space: pre;
 }
 
@@ -285,7 +339,7 @@ pre.astro-code code {
    el usuario no tiene forma de saber que hay más contenido a la derecha.
    Estas reglas la dejan dibujada de forma permanente.
 
-   El gris translucido se ve bien sobre el fondo claro y sobre el oscuro,
+   El gris translúcido se ve bien sobre el fondo claro y sobre el oscuro,
    así que no hace falta duplicar la regla por tema. */
 pre.astro-code::-webkit-scrollbar {
   height: 10px;
