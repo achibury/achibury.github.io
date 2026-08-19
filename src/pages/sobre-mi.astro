@@ -24,6 +24,23 @@ import Base from '../layouts/Base.astro';
  * Para activarla: deja tu PDF en public/cv.pdf y vuelve a compilar.
  */
 const hayCV = existsSync(path.join(process.cwd(), 'public', 'cv.pdf'));
+
+/**
+ * ¿Mostrar la sección de certificaciones?
+ *
+ * Hoy está en `false` porque todavía no hay ninguna, y una sección con
+ * "Nombre de la certificación · Entidad · Año" de relleno se lee peor
+ * que no tener la sección.
+ *
+ * PARA ACTIVARLA cuando tengas la primera:
+ *   1. Cambia esta línea a `true`.
+ *   2. Más abajo, en el bloque CERTIFICACIONES, reemplaza los <li> de
+ *      ejemplo por los reales. El markup ya está escrito y listo.
+ *   3. Si tienes solo certificaciones en curso y ninguna obtenida (o al
+ *      revés), borra el <h3> y la <ul> del grupo que te sobre.
+ *   4. `npm run build`.
+ */
+const hayCertificaciones = false;
 ---
 
 <Base
@@ -68,32 +85,27 @@ const hayCV = existsSync(path.join(process.cwd(), 'public', 'cv.pdf'));
     <section class="seccion">
       <h2 class="titulo-seccion">Formación académica</h2>
 
-      {/* REEMPLAZAR: cada <li class="ficha"> es una carrera o programa.
-          Duplica el bloque completo para agregar otro, o borra el segundo
-          si solo tienes uno. El tercer párrafo es opcional. */}
+      {/* Para agregar otro programa más adelante, duplica el <li class="ficha">
+          entero. Dentro de cada ficha puedes sumar un <p class="texto-suave">
+          con la mención o las líneas del plan que quieras destacar. */}
       <ul class="fichas">
         <li class="ficha">
           <h3 class="ficha__titulo">Ingeniería en Ciberseguridad</h3>
-          <p class="meta">Nombre de la institución · 2023 – actualidad</p>
-          <p class="texto-suave">
-            Mención o líneas del plan de estudio que quieras destacar.
-          </p>
-        </li>
-        <li class="ficha">
-          <h3 class="ficha__titulo">Nombre del programa o diplomado</h3>
-          <p class="meta">Institución · Año</p>
+          <p class="meta">Instituto Profesional AIEP · 2023 – actualidad</p>
         </li>
       </ul>
     </section>
 
     {/* ================= CERTIFICACIONES ================= */}
+    {/* Oculta mientras `hayCertificaciones` sea false (ver arriba, en el
+        bloque --- de esta misma página). El markup de abajo NO se publica,
+        queda esperando: cuando tengas la primera certificación, pones la
+        bandera en true y reemplazas los <li> de ejemplo. */}
+    {
+      hayCertificaciones && (
     <section class="seccion">
       <h2 class="titulo-seccion">Certificaciones</h2>
 
-      {/* REEMPLAZAR: las dos listas de abajo.
-          Si todavía no tienes ninguna obtenida, borra el bloque
-          "Obtenidas" entero y deja solo "En curso": es más honesto que
-          dejarlo vacío o con texto de relleno. */}
       <div class="bloque-texto">
         <h3 class="subtitulo">Obtenidas</h3>
         <ul class="lista-simple">
@@ -116,6 +128,8 @@ const hayCV = existsSync(path.join(process.cwd(), 'public', 'cv.pdf'));
         </ul>
       </div>
     </section>
+      )
+    }
 
     {/* ================= ÁREAS DE INTERÉS ================= */}
     <section class="seccion">
@@ -162,22 +176,50 @@ const hayCV = existsSync(path.join(process.cwd(), 'public', 'cv.pdf'));
     <section class="seccion">
       <h2 class="titulo-seccion">Contacto</h2>
 
-      {/* REEMPLAZAR: el correo y la URL de LinkedIn.
-          Ojo con el correo: al publicarlo queda visible para cualquiera y
-          para los rastreadores de spam. Si prefieres, usa una dirección
-          aparte solo para el portafolio en vez de tu correo principal. */}
+      {/* El correo NO se publica como enlace mailto:, que es exactamente
+          lo que rastrean los recolectores de spam. Va como texto, partido
+          en dos por un <span> y con la arroba escrita como entidad HTML
+          (&#64;), así que la dirección completa no aparece como una sola
+          cadena en el código fuente de la página.
+
+          El script que está debajo de la lista lo convierte en un enlace
+          mailto: funcional al cargar. Si el JavaScript no corre, el correo
+          se sigue viendo y se puede copiar: solo deja de ser clickeable. */}
       <ul class="lista-contacto">
         <li>
           <span class="lista-contacto__clave">Correo</span>
-          <a href="mailto:tu-correo@ejemplo.com">tu-correo@ejemplo.com</a>
+          <span class="correo" data-correo>benjamin.achibury<span>&#64;</span>protonmail.com</span>
         </li>
         <li>
           <span class="lista-contacto__clave">LinkedIn</span>
-          <a href="https://www.linkedin.com/in/tu-usuario/" rel="me noopener">
-            linkedin.com/in/tu-usuario
-          </a>
+          <a
+            class="correo"
+            href="https://www.linkedin.com/in/benjamin-achibury/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >linkedin.com/in/benjamin-achibury</a>
         </li>
       </ul>
+
+      {/* Arma el enlace mailto: en el navegador.
+
+          `is:inline` le pide a Astro que lo deje tal cual dentro del HTML
+          en vez de empaquetarlo en un .js aparte: son siete líneas y no
+          vale la pena una peticion extra por ellas.
+
+          Va DESPUÉS del <ul>, o sea que cuando corre el elemento ya existe
+          y no hace falta esperar ningún evento de carga. */}
+      <script is:inline>
+        document.querySelectorAll('[data-correo]').forEach(function (elemento) {
+          var direccion = elemento.textContent.replace(/\s+/g, '');
+          if (!direccion) return;
+          var enlace = document.createElement('a');
+          enlace.href = 'mailto:' + direccion;
+          enlace.textContent = direccion;
+          enlace.className = elemento.className;
+          elemento.replaceWith(enlace);
+        });
+      </script>
     </section>
   </div>
 </Base>
@@ -258,6 +300,12 @@ const hayCV = existsSync(path.join(process.cwd(), 'public', 'cv.pdf'));
     gap: var(--e-2) var(--e-4);
     padding-block: var(--e-3);
     border-top: 1px solid var(--borde);
+  }
+
+  /* La direccion de correo es larga y no tiene espacios: sin esto
+     desborda el contenedor en pantallas de 360px. */
+  .correo {
+    overflow-wrap: anywhere;
   }
 
   .lista-contacto__clave {

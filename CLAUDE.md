@@ -59,7 +59,10 @@ Gestionar el servidor en background con `astro dev stop`, `astro dev status` y `
 
 ## Arquitectura
 
-- Astro 7, sin integraciones de framework instaladas. Cero JavaScript en el cliente.
+- Astro 7, sin integraciones de framework instaladas. Prácticamente cero
+  JavaScript en el cliente: la única excepción es un `<script is:inline>` de
+  siete líneas en `sobre-mi.astro`, que arma el enlace `mailto:` del correo
+  en el navegador para no publicarlo en el HTML estático.
 - `src/pages/` usa routing basado en archivos: cada archivo es una ruta.
   `labs/[...id].astro` es la ruta dinámica que genera una página por lab.
 - `src/lib/labs.ts` es el **único** punto de lectura de la colección. Ahí vive el
