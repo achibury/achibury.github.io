@@ -1,0 +1,32 @@
+---
+/**
+ * Pie de página. El año se calcula solo en cada build, así que no hay
+ * que acordarse de actualizarlo a mano.
+ */
+const anio = new Date().getFullYear();
+---
+
+<footer class="pie">
+  <div class="contenedor pie__interior">
+    <p class="meta">© {anio} Benjamin Achibury</p>
+    <p class="meta">Portafolio de ciberseguridad</p>
+  </div>
+</footer>
+
+<style>
+  .pie {
+    border-top: 1px solid var(--borde);
+  }
+
+  .pie__interior {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--e-2) var(--e-6);
+    padding-block: var(--e-8);
+  }
+
+  .pie p {
+    margin: 0;
+  }
+</style>

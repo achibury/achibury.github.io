@@ -1,0 +1,276 @@
+/* ==========================================================================
+   TOKENS DE DISEÑO
+   Todo el color, el espaciado, la tipografía y los anchos del sitio salen
+   de acá. Para reestilizar el portafolio más adelante, en el 90% de los
+   casos basta con cambiar valores en este bloque y no tocar ningún
+   componente.
+   ========================================================================== */
+
+:root {
+  /* Le avisa al navegador que soportamos ambos modos (afecta scrollbars,
+     inputs y otros controles nativos). */
+  color-scheme: light dark;
+
+  /* --- Color: modo claro --- */
+  --fondo: #ffffff;
+  --superficie: #f8fafc;
+  --borde: #e2e8f0;
+  --texto: #0f172a;
+  --texto-suave: #475569;
+  --acento: #0f766e;
+  --acento-fondo: #f0fdfa;
+
+  /* --- Tipografía ---
+     Fuentes del sistema: cargan instantáneo y no dependen de terceros.
+     La monoespaciada se usa SOLO para código. */
+  --fuente: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --fuente-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas,
+    'Liberation Mono', Menlo, monospace;
+
+  /* --- Anchos ---
+     Dos medidas, y todo el sitio sale de estas dos.
+
+     --ancho-prosa limita el texto corrido. La unidad `ch` equivale al
+     ancho del carácter "0", así que 70ch ≈ 70 caracteres por línea, que
+     es el rango donde el ojo lee cómodo sin perder el renglón.
+
+     --ancho-contenedor es el marco general: header, footer, listados y
+     los bloques anchos (código, imágenes, tablas) dentro de un lab. */
+  --ancho-prosa: 70ch;
+  --ancho-contenedor: 1120px;
+
+  /* --- Escala de espaciado ---
+     Usar siempre estas variables en vez de píxeles sueltos mantiene el
+     ritmo vertical parejo en todo el sitio. */
+  --e-1: 0.25rem;
+  --e-2: 0.5rem;
+  --e-3: 0.75rem;
+  --e-4: 1rem;
+  --e-6: 1.5rem;
+  --e-8: 2rem;
+  --e-12: 3rem;
+  --e-16: 4rem;
+  --e-24: 6rem;
+
+  --radio: 6px;
+}
+
+/* --- Color: modo oscuro (gris pizarra) ---
+   Se activa según la preferencia del sistema operativo. No hay botón
+   de cambio manual: es a propósito, menos piezas que mantener en la v1. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #0f172a;
+    --superficie: #1e293b;
+    --borde: #334155;
+    --texto: #e2e8f0;
+    --texto-suave: #94a3b8;
+    --acento: #5eead4;
+    --acento-fondo: #134e4a;
+  }
+}
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--fuente);
+  font-size: 1rem;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: 2rem;
+}
+h2 {
+  font-size: 1.375rem;
+}
+h3 {
+  font-size: 1.125rem;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--acento);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+/* Marca visible del foco para navegación con teclado. Accesibilidad
+   básica: no la quites al reestilizar. */
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ==========================================================================
+   ESTRUCTURA Y ANCHOS
+   ========================================================================== */
+
+/* Empuja el footer al fondo aunque la página tenga poco contenido. */
+.armazon {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.armazon > main {
+  flex: 1;
+  padding-block: var(--e-16) var(--e-24);
+}
+
+/* Marco general: header, footer y el contenido de todas las páginas.
+   Es el ancho MÁXIMO que puede ocupar cualquier cosa. */
+.contenedor {
+  width: 100%;
+  max-width: var(--ancho-contenedor);
+  margin-inline: auto;
+  padding-inline: var(--e-6);
+}
+
+/* Medida de lectura.
+   Dentro de <main>, el texto corrido se limita a ~70 caracteres por
+   línea aunque el contenedor sea mucho más ancho. Se aplica solo a los
+   elementos de texto: lo que NO está en esta lista (pre, img, table)
+   queda libre y puede llegar hasta el ancho del contenedor.
+
+   Va alineado a la izquierda, no centrado, para que el borde izquierdo
+   del texto coincida con el del header y el footer. */
+main :is(p, h1, h2, h3, ul, ol, blockquote, dl) {
+  max-width: var(--ancho-prosa);
+}
+
+/* Separador estándar entre secciones de una página. */
+.seccion + .seccion {
+  margin-top: var(--e-16);
+}
+
+/* ==========================================================================
+   PIEZAS REUTILIZABLES
+   ========================================================================== */
+
+/* Título chico en versalitas que encabeza una sección ("Últimos labs"). */
+.titulo-seccion {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--texto-suave);
+  margin: 0 0 var(--e-6);
+}
+
+/* Píldora chica: categoría, herramientas, técnicas MITRE. */
+.etiqueta {
+  display: inline-block;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  padding: var(--e-1) var(--e-2);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  color: var(--texto-suave);
+  background: var(--superficie);
+}
+
+/* Variante con acento. Usada SOLO para la categoría del lab: es el
+   único uso del color de acento fuera de los enlaces. */
+.etiqueta--acento {
+  color: var(--acento);
+  border-color: var(--acento);
+  background: var(--acento-fondo);
+}
+
+.lista-etiquetas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+}
+
+.texto-suave {
+  color: var(--texto-suave);
+}
+
+.meta {
+  font-size: 0.875rem;
+  color: var(--texto-suave);
+}
+
+/* ==========================================================================
+   CÓDIGO
+   ========================================================================== */
+
+code {
+  font-family: var(--fuente-mono);
+  font-size: 0.875em;
+}
+
+/* Código dentro de un párrafo (`así`). */
+:not(pre) > code {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+/* Bloque de código completo. Shiki le pone la clase .astro-code. */
+pre.astro-code {
+  padding: var(--e-4);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+/* Activa la paleta oscura de Shiki. Los colores del tema claro vienen
+   escritos en el HTML; los del oscuro llegan en estas variables y hay
+   que aplicarlos acá. El !important es necesario porque los colores
+   claros están en atributos style, que ganan por especificidad. */
+@media (prefers-color-scheme: dark) {
+  pre.astro-code,
+  pre.astro-code span {
+    color: var(--shiki-dark) !important;
+    background-color: var(--shiki-dark-bg) !important;
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+  }
+}

@@ -1,0 +1,62 @@
+---
+/**
+ * Layout base: el <html> completo que envuelve TODAS las páginas.
+ *
+ * Cada página del sitio se escribe adentro de este componente, así que
+ * lo que cambies acá (header, footer, metadatos) se aplica a todo el
+ * portafolio de una sola vez.
+ *
+ * El <slot /> más abajo es el hueco donde Astro inserta el contenido
+ * propio de cada página.
+ */
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+interface Props {
+  titulo: string;
+  descripcion?: string;
+}
+
+const { titulo, descripcion } = Astro.props;
+const tituloCompleto = `${titulo} · Benjamin Achibury`;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{tituloCompleto}</title>
+    {descripcion && <meta name="description" content={descripcion} />}
+
+    <!-- ===================================================================
+         ⚠️  QUITAR ESTA LÍNEA ANTES DE PUBLICAR  ⚠️
+
+         Mientras esté acá, el sitio le pide a Google y demás buscadores
+         que NO lo indexen ni sigan sus enlaces. Sirve para trabajar
+         tranquilo con el sitio ya desplegado y sin que aparezca en
+         búsquedas.
+
+         Cuando el portafolio esté listo para que lo vea gente:
+         borra la etiqueta <meta name="robots"> de abajo y vuelve a
+         hacer push. Si no la borras, el sitio queda invisible.
+         =================================================================== -->
+    <meta name="robots" content="noindex, nofollow" />
+    <!-- ============ FIN DEL BLOQUE A QUITAR ANTES DE PUBLICAR ============ -->
+  </head>
+
+  <body>
+    <div class="armazon">
+      <Header />
+      <main>
+        <slot />
+      </main>
+      <Footer />
+    </div>
+  </body>
+</html>

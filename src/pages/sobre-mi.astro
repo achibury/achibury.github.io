@@ -1,0 +1,268 @@
+---
+/**
+ * /sobre-mi — perfil, formación, certificaciones y contacto.
+ *
+ * Es texto fijo, así que vive directamente en esta página: no necesita
+ * colección ni Markdown.
+ *
+ * Todo lo que hay que reemplazar está marcado con un comentario que
+ * empieza con REEMPLAZAR, justo encima del bloque correspondiente.
+ * Esos comentarios NO se publican: quedan solo en el código fuente.
+ */
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  titulo="Sobre mí"
+  descripcion="Perfil profesional, formación y contacto de Benjamin Achibury."
+>
+  <div class="contenedor contenedor--centrado">
+    <section class="seccion">
+      <h1>Sobre mí</h1>
+    </section>
+
+    {/* ================= PRESENTACIÓN ================= */}
+    <section class="seccion">
+      <h2 class="titulo-seccion">Presentación</h2>
+
+      {/* REEMPLAZAR: los tres párrafos de abajo.
+          Sugerencia de contenido para cada uno:
+            1. Quién eres y en qué estás hoy.
+            2. Qué te interesa del blue team y por qué.
+            3. Cómo trabajas, o qué busca quien te lea (práctica, memoria,
+               primer empleo).
+          Con dos párrafos alcanza si el tercero te sale forzado. */}
+      <div class="bloque-texto">
+        <p>
+          Soy estudiante de ingeniería en ciberseguridad en Chile, enfocado en
+          seguridad defensiva. Este portafolio reúne los laboratorios que monto
+          para aprender, documentados de principio a fin.
+        </p>
+        <p>
+          Me interesa el lado defensivo por una razón concreta: detectar bien es
+          más difícil que atacar, porque hay que separar la señal del ruido de
+          la operación diaria. Cada lab que publico apunta a esa pregunta.
+        </p>
+        <p>
+          Documento también lo que sale mal. Un lab donde todo funciona a la
+          primera enseña menos que uno donde hubo que corregir el rumbo.
+        </p>
+      </div>
+    </section>
+
+    {/* ================= FORMACIÓN ACADÉMICA ================= */}
+    <section class="seccion">
+      <h2 class="titulo-seccion">Formación académica</h2>
+
+      {/* REEMPLAZAR: cada <li class="ficha"> es una carrera o programa.
+          Duplica el bloque completo para agregar otro, o borra el segundo
+          si solo tienes uno. El tercer párrafo es opcional. */}
+      <ul class="fichas">
+        <li class="ficha">
+          <h3 class="ficha__titulo">Ingeniería en Ciberseguridad</h3>
+          <p class="meta">Nombre de la institución · 2023 – actualidad</p>
+          <p class="texto-suave">
+            Mención o líneas del plan de estudio que quieras destacar.
+          </p>
+        </li>
+        <li class="ficha">
+          <h3 class="ficha__titulo">Nombre del programa o diplomado</h3>
+          <p class="meta">Institución · Año</p>
+        </li>
+      </ul>
+    </section>
+
+    {/* ================= CERTIFICACIONES ================= */}
+    <section class="seccion">
+      <h2 class="titulo-seccion">Certificaciones</h2>
+
+      {/* REEMPLAZAR: las dos listas de abajo.
+          Si todavía no tienes ninguna obtenida, borra el bloque
+          "Obtenidas" entero y deja solo "En curso": es más honesto que
+          dejarlo vacío o con texto de relleno. */}
+      <div class="bloque-texto">
+        <h3 class="subtitulo">Obtenidas</h3>
+        <ul class="lista-simple">
+          <li>
+            Nombre de la certificación
+            <span class="meta">· Entidad · Año</span>
+          </li>
+          <li>
+            Nombre de la certificación
+            <span class="meta">· Entidad · Año</span>
+          </li>
+        </ul>
+
+        <h3 class="subtitulo">En curso</h3>
+        <ul class="lista-simple">
+          <li>
+            Nombre de la certificación
+            <span class="meta">· Entidad · fecha estimada de rendición</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    {/* ================= ÁREAS DE INTERÉS ================= */}
+    <section class="seccion">
+      <h2 class="titulo-seccion">Áreas de interés</h2>
+
+      {/* REEMPLAZAR: quédate con las que de verdad te interesan y borra el
+          resto. Una lista corta y específica dice más que una larga y
+          genérica. */}
+      <ul class="lista-simple">
+        <li>Ingeniería de detección y escritura de reglas (Sigma, YARA)</li>
+        <li>Análisis de logs y monitoreo con SIEM</li>
+        <li>Respuesta a incidentes y análisis forense (DFIR)</li>
+        <li>Threat hunting y modelado de amenazas con MITRE ATT&CK</li>
+        <li>Cumplimiento y marcos de referencia (ISO 27001, NIST CSF)</li>
+      </ul>
+    </section>
+
+    {/* ================= CURRÍCULUM ================= */}
+    <section class="seccion">
+      <h2 class="titulo-seccion">Currículum</h2>
+
+      {/* REEMPLAZAR: el archivo en sí. El enlace ya apunta a /cv.pdf, así
+          que solo tienes que dejar tu PDF en public/cv.pdf y se sirve
+          solo. Mientras el archivo no exista, este botón da error 404.
+
+          Antes de subirlo: revisa que el PDF no traiga tu dirección
+          particular, tu RUT ni tu teléfono, si no quieres que queden
+          públicos e indexables. */}
+      <p class="texto-suave">
+        Versión completa en PDF, con experiencia y detalle de formación.
+      </p>
+      <p>
+        <a class="boton" href="/cv.pdf" download>Descargar CV (PDF)</a>
+      </p>
+    </section>
+
+    {/* ================= CONTACTO ================= */}
+    <section class="seccion">
+      <h2 class="titulo-seccion">Contacto</h2>
+
+      {/* REEMPLAZAR: el correo y la URL de LinkedIn.
+          Ojo con el correo: al publicarlo queda visible para cualquiera y
+          para los rastreadores de spam. Si prefieres, usa una dirección
+          aparte solo para el portafolio en vez de tu correo principal. */}
+      <ul class="lista-contacto">
+        <li>
+          <span class="lista-contacto__clave">Correo</span>
+          <a href="mailto:tu-correo@ejemplo.com">tu-correo@ejemplo.com</a>
+        </li>
+        <li>
+          <span class="lista-contacto__clave">LinkedIn</span>
+          <a href="https://www.linkedin.com/in/tu-usuario/" rel="me noopener">
+            linkedin.com/in/tu-usuario
+          </a>
+        </li>
+      </ul>
+    </section>
+  </div>
+</Base>
+
+<style>
+  /* Centrado del bloque, solo en esta pagina.
+     .contenedor ya viene con margin-inline: auto, o sea que siempre esta
+     centrado dentro del viewport; lo que pasa es que a 1120px de ancho el
+     texto (limitado a 70ch por global.css) queda pegado al borde
+     izquierdo y la pagina se ve desbalanceada.
+
+     La solucion es angostar el contenedor hasta la medida de lectura: al
+     ser mas angosto, el auto lo centra de verdad. Se le suma el
+     padding-inline de los dos lados para que el TEXTO mida exactamente
+     70ch (box-sizing: border-box incluye el padding en el max-width).
+
+     El texto sigue alineado a la izquierda: aca no se toca text-align,
+     solo se mueve el bloque que lo contiene. */
+  .contenedor--centrado {
+    max-width: calc(var(--ancho-prosa) + var(--e-6) * 2);
+  }
+
+  /* Separación entre párrafos seguidos dentro de una misma sección. */
+  .bloque-texto > * + * {
+    margin-top: var(--e-4);
+  }
+
+  .subtitulo {
+    font-size: 1rem;
+    margin-top: var(--e-8);
+  }
+
+  .bloque-texto > .subtitulo:first-child {
+    margin-top: 0;
+  }
+
+  /* Fichas de formación: cada una separada por una línea superior, mismo
+     tratamiento que las tarjetas de lab para que el sitio se lea parejo. */
+  .fichas {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .ficha {
+    padding-block: var(--e-6);
+    border-top: 1px solid var(--borde);
+  }
+
+  .ficha__titulo {
+    margin: 0 0 var(--e-1);
+  }
+
+  .ficha p + p {
+    margin-top: var(--e-2);
+  }
+
+  .lista-simple {
+    margin: 0;
+    padding-left: var(--e-6);
+  }
+
+  .lista-simple li {
+    margin-block: var(--e-2);
+  }
+
+  /* Contacto: la etiqueta ("Correo") en una columna fija y el dato al
+     lado, para que las filas queden alineadas entre sí. */
+  .lista-contacto {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lista-contacto li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--e-2) var(--e-4);
+    padding-block: var(--e-3);
+    border-top: 1px solid var(--borde);
+  }
+
+  .lista-contacto__clave {
+    flex: 0 0 6rem;
+    font-size: 0.875rem;
+    color: var(--texto-suave);
+  }
+
+  /* Botón de descarga. Usa el acento, igual que la píldora de categoría
+     de los labs: es la misma familia visual. */
+  .boton {
+    display: inline-block;
+    margin-top: var(--e-4);
+    padding: var(--e-3) var(--e-6);
+    border: 1px solid var(--acento);
+    border-radius: var(--radio);
+    background: var(--acento-fondo);
+    color: var(--acento);
+    font-size: 0.9375rem;
+    font-weight: 550;
+    text-decoration: none;
+  }
+
+  .boton:hover {
+    background: var(--acento);
+    color: var(--fondo);
+  }
+</style>

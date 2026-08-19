@@ -1,0 +1,82 @@
+---
+/**
+ * Tarjeta que resume un lab en un listado.
+ *
+ * Se usa en dos lugares: la home (últimos 3) y /labs (todos). Al estar
+ * en un componente, si mañana quieres cambiar cómo se ve un lab en las
+ * listas, lo cambias una vez acá y se actualiza en los dos lados.
+ */
+import type { Lab } from '../lib/labs';
+import { ETIQUETAS_CATEGORIA, formatearFecha } from '../lib/labs';
+
+interface Props {
+  lab: Lab;
+}
+
+const { lab } = Astro.props;
+const { titulo, resumen, fecha, categoria, borrador } = lab.data;
+---
+
+<article class="tarjeta">
+  <div class="tarjeta__meta">
+    <span class="etiqueta etiqueta--acento">{ETIQUETAS_CATEGORIA[categoria]}</span>
+    <!-- <time> con datetime en formato ISO: legible para personas,
+         interpretable para máquinas. -->
+    <time class="meta" datetime={fecha.toISOString()}>{formatearFecha(fecha)}</time>
+    {
+      /* Este aviso solo puede aparecer en `npm run dev`: en producción
+         los borradores ni siquiera llegan a esta tarjeta. */
+      borrador && <span class="etiqueta">Borrador</span>
+    }
+  </div>
+
+  <h3 class="tarjeta__titulo">
+    <!-- El enlace envuelve solo el título, pero el ::after de más abajo
+         lo estira sobre toda la tarjeta para que sea clickeable entera
+         sin anidar enlaces (que rompe la accesibilidad). -->
+    <a href={`/labs/${lab.id}/`}>{titulo}</a>
+  </h3>
+
+  <p class="texto-suave">{resumen}</p>
+</article>
+
+<style>
+  .tarjeta {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-2);
+    padding-block: var(--e-6);
+    border-top: 1px solid var(--borde);
+  }
+
+  .tarjeta__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--e-3);
+  }
+
+  .tarjeta__titulo {
+    margin: 0;
+  }
+
+  .tarjeta__titulo a {
+    color: var(--texto);
+    text-decoration: none;
+  }
+
+  .tarjeta__titulo a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .tarjeta:hover .tarjeta__titulo a {
+    color: var(--acento);
+  }
+
+  .tarjeta p {
+    margin: 0;
+  }
+</style>

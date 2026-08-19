@@ -1,17 +1,70 @@
 ---
+/**
+ * Home (/).
+ *
+ * Nombre, línea de posicionamiento y los 3 labs más recientes.
+ * `.slice(0, 3)` corta la lista ya ordenada: al publicar un lab nuevo,
+ * entra solo acá y el más viejo sale.
+ */
+import Base from '../layouts/Base.astro';
+import LabCard from '../components/LabCard.astro';
+import { getLabsPublicados } from '../lib/labs';
 
+const labs = await getLabsPublicados();
+const ultimosLabs = labs.slice(0, 3);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Base
+  titulo="Inicio"
+  descripcion="Portafolio de ciberseguridad defensiva: laboratorios de detección, DFIR y cumplimiento."
+>
+  <div class="contenedor">
+    <section class="seccion presentacion">
+      <h1>Benjamin Achibury</h1>
+      <p class="presentacion__linea">
+        Estudiante de ingeniería en ciberseguridad. Construyo detecciones,
+        analizo incidentes y documento cada paso.
+      </p>
+    </section>
+
+    <section class="seccion">
+      <h2 class="titulo-seccion">Últimos labs</h2>
+
+      {
+        ultimosLabs.length > 0 ? (
+          <div>
+            {ultimosLabs.map((lab) => (
+              <LabCard lab={lab} />
+            ))}
+          </div>
+        ) : (
+          <p class="texto-suave">Todavía no hay labs publicados.</p>
+        )
+      }
+
+      {
+        /* El enlace a /labs solo tiene sentido si hay más labs de los
+           que ya se muestran acá arriba. */
+        labs.length > ultimosLabs.length && (
+          <p class="ver-todos">
+            <a href="/labs/">Ver todos los labs →</a>
+          </p>
+        )
+      }
+    </section>
+  </div>
+</Base>
+
+<style>
+  .presentacion__linea {
+    margin-top: var(--e-4);
+    font-size: 1.125rem;
+    color: var(--texto-suave);
+    text-wrap: pretty;
+  }
+
+  .ver-todos {
+    margin-top: var(--e-8);
+    font-size: 0.9375rem;
+  }
+</style>

@@ -1,0 +1,252 @@
+---
+/**
+ * Layout de la página de detalle de un lab.
+ *
+ * Recibe el lab entero, arma la cabecera (título, fecha, categoría,
+ * herramientas, técnicas MITRE) y deja un <slot /> donde se inserta el
+ * Markdown ya convertido a HTML.
+ *
+ * Los estilos del contenido Markdown están al final: como ese HTML lo
+ * genera Astro y no lo escribimos nosotros, hay que estilarlo con
+ * :global() desde el contenedor .prosa.
+ */
+import Base from './Base.astro';
+import type { Lab } from '../lib/labs';
+import { ETIQUETAS_CATEGORIA, ETIQUETAS_FUNCION, formatearFecha } from '../lib/labs';
+
+interface Props {
+  lab: Lab;
+}
+
+const { lab } = Astro.props;
+const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, borrador } =
+  lab.data;
+---
+
+<Base titulo={titulo} descripcion={resumen}>
+  <article class="contenedor">
+    <header class="cabecera">
+      {
+        borrador && (
+          <p class="aviso">
+            Borrador. Visible solo en desarrollo: no se publica en el sitio.
+          </p>
+        )
+      }
+
+      <div class="cabecera__meta">
+        <span class="etiqueta etiqueta--acento">{ETIQUETAS_CATEGORIA[categoria]}</span>
+        <time class="meta" datetime={fecha.toISOString()}>{formatearFecha(fecha)}</time>
+      </div>
+
+      <h1>{titulo}</h1>
+      <p class="cabecera__resumen texto-suave">{resumen}</p>
+
+      {
+        /* Las dos listas solo aparecen si el frontmatter las trae.
+           Un lab sin técnicas MITRE no muestra un bloque vacío. */
+        herramientas.length > 0 && (
+          <div class="cabecera__grupo">
+            <h2 class="titulo-seccion">Herramientas</h2>
+            <ul class="lista-etiquetas">
+              {herramientas.map((h) => (
+                <li class="etiqueta">{h}</li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+
+      {
+        /* mitre_attack y funcion son opcionales en el schema: pueden
+           llegar como undefined, no solo como lista vacia. Por eso se
+           comprueba primero que existan (`mitre_attack &&`) antes de
+           mirar su largo: sin esa guarda, un lab que no los declara
+           reventaria al construir la pagina. */
+        mitre_attack && mitre_attack.length > 0 && (
+          <div class="cabecera__grupo">
+            <h2 class="titulo-seccion">MITRE ATT&CK</h2>
+            <ul class="lista-etiquetas">
+              {mitre_attack.map((t) => (
+                <li class="etiqueta">{t}</li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+
+      {
+        funcion && funcion.length > 0 && (
+          <div class="cabecera__grupo">
+            <h2 class="titulo-seccion">Función</h2>
+            <ul class="lista-etiquetas">
+              {funcion.map((f) => (
+                <li class="etiqueta">{ETIQUETAS_FUNCION[f]}</li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </header>
+
+    <div class="prosa">
+      <slot />
+    </div>
+
+    <p class="volver"><a href="/labs/">← Todos los labs</a></p>
+  </article>
+</Base>
+
+<style>
+  .cabecera {
+    padding-bottom: var(--e-8);
+    border-bottom: 1px solid var(--borde);
+    margin-bottom: var(--e-8);
+  }
+
+  .cabecera__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--e-3);
+    margin-bottom: var(--e-4);
+  }
+
+  .cabecera__resumen {
+    margin-top: var(--e-3);
+    font-size: 1.0625rem;
+  }
+
+  .cabecera__grupo {
+    margin-top: var(--e-6);
+  }
+
+  .cabecera__grupo .titulo-seccion {
+    margin-bottom: var(--e-2);
+  }
+
+  .aviso {
+    margin: 0 0 var(--e-6);
+    padding: var(--e-3) var(--e-4);
+    border: 1px dashed var(--borde);
+    border-radius: var(--radio);
+    background: var(--superficie);
+    color: var(--texto-suave);
+    font-size: 0.875rem;
+  }
+
+  .volver {
+    margin-top: var(--e-16);
+    padding-top: var(--e-6);
+    border-top: 1px solid var(--borde);
+    font-size: 0.9375rem;
+  }
+
+  /* --- Contenido del lab (el HTML que sale del Markdown) ---
+     :global() es necesario porque este HTML no está escrito en este
+     archivo: lo genera Astro al convertir el .md, así que no lleva las
+     clases automáticas de Astro. Está acotado a .prosa, o sea que no
+     se escapa al resto del sitio. */
+
+  .prosa :global(h2) {
+    margin-top: var(--e-12);
+    margin-bottom: var(--e-4);
+  }
+
+  .prosa :global(h3) {
+    margin-top: var(--e-8);
+    margin-bottom: var(--e-3);
+  }
+
+  .prosa :global(p),
+  .prosa :global(ul),
+  .prosa :global(ol) {
+    margin-block: var(--e-4);
+  }
+
+  .prosa :global(ul),
+  .prosa :global(ol) {
+    padding-left: var(--e-6);
+  }
+
+  .prosa :global(li) {
+    margin-block: var(--e-2);
+  }
+
+  .prosa :global(pre) {
+    margin-block: var(--e-6);
+  }
+
+  /* Imágenes: ocupan el ancho disponible, con borde suave para
+     separarlas del fondo. En Markdown se escriben así:
+       ![Texto alternativo](./mi-captura.png)
+     Si la ruta es relativa, Astro optimiza la imagen en el build. */
+  .prosa :global(figure) {
+    margin: var(--e-8) 0;
+  }
+
+  .prosa :global(img) {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+  }
+
+  .prosa :global(figcaption),
+  .prosa :global(img + em) {
+    display: block;
+    margin-top: var(--e-2);
+    font-size: 0.875rem;
+    color: var(--texto-suave);
+  }
+
+  .prosa :global(blockquote) {
+    margin: var(--e-6) 0;
+    padding-left: var(--e-4);
+    border-left: 2px solid var(--borde);
+    color: var(--texto-suave);
+  }
+
+  .prosa :global(hr) {
+    margin-block: var(--e-12);
+    border: 0;
+    border-top: 1px solid var(--borde);
+  }
+
+  .prosa :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin-block: var(--e-6);
+    font-size: 0.9375rem;
+  }
+
+  .prosa :global(th),
+  .prosa :global(td) {
+    text-align: left;
+    padding: var(--e-2) var(--e-3);
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .prosa :global(th) {
+    font-weight: 600;
+  }
+
+  /* --- Bloques anchos ---
+     El texto del lab queda limitado a la medida de lectura por la regla
+     de global.css. Estos tres se liberan de ese límite y pueden ocupar
+     hasta el ancho del contenedor:
+
+       - los bloques de código (pre)
+       - las tablas
+       - los párrafos que contienen una imagen
+
+     Markdown envuelve las imágenes en un <p>, así que hay que soltar ese
+     párrafo (:has(img)) y no la imagen: si solo soltáramos la imagen,
+     seguiría encerrada en un padre de 70ch. */
+  .prosa :global(pre),
+  .prosa :global(table),
+  .prosa :global(figure),
+  .prosa :global(p:has(img)) {
+    max-width: none;
+  }
+</style>

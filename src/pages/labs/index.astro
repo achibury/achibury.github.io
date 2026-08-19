@@ -1,0 +1,51 @@
+---
+/**
+ * Listado completo de labs (/labs).
+ *
+ * El orden y el filtrado de borradores ya vienen resueltos desde
+ * lib/labs.ts, así que acá solo hay que dibujar la lista.
+ */
+import Base from '../../layouts/Base.astro';
+import LabCard from '../../components/LabCard.astro';
+import { getLabsPublicados } from '../../lib/labs';
+
+const labs = await getLabsPublicados();
+---
+
+<Base
+  titulo="Labs"
+  descripcion="Laboratorios de detección, análisis forense y cumplimiento."
+>
+  <div class="contenedor">
+    <section class="seccion">
+      <h1>Labs</h1>
+      <p class="intro texto-suave">
+        Ejercicios prácticos documentados de principio a fin: qué monté, qué
+        observé y qué conclusiones saqué.
+      </p>
+
+      {
+        labs.length > 0 ? (
+          <div class="lista">
+            {labs.map((lab) => (
+              <LabCard lab={lab} />
+            ))}
+          </div>
+        ) : (
+          <p class="texto-suave">Todavía no hay labs publicados.</p>
+        )
+      }
+    </section>
+  </div>
+</Base>
+
+<style>
+  .intro {
+    margin-top: var(--e-4);
+    text-wrap: pretty;
+  }
+
+  .lista {
+    margin-top: var(--e-12);
+  }
+</style>

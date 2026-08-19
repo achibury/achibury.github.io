@@ -1,0 +1,110 @@
+---
+/**
+ * Encabezado con la navegación principal.
+ *
+ * El nombre de la izquierda es el enlace al home: por eso "Inicio" no
+ * está en el menú. Está estilado como identificador discreto (chico,
+ * peso normal, color atenuado) a propósito — la jerarquía fuerte de la
+ * home es el H1, no el header.
+ *
+ * Los enlaces salen del array `enlaces`: para agregar una sección al
+ * menú, agregas un objeto acá y listo, no hay que tocar el HTML.
+ *
+ * `Astro.url.pathname` es la URL de la página que se está mostrando.
+ * La comparamos con cada enlace para marcar en cuál sección estás
+ * parado (visualmente y con aria-current, que lo anuncian los
+ * lectores de pantalla).
+ */
+const enlaces = [
+  { href: '/labs/', texto: 'Labs' },
+  { href: '/herramientas/', texto: 'Herramientas' },
+  { href: '/sobre-mi/', texto: 'Sobre mí' },
+];
+
+const rutaActual = Astro.url.pathname;
+
+function esActivo(href: string): boolean {
+  // startsWith para que /labs/mi-lab también marque "Labs" como activo.
+  return rutaActual.startsWith(href);
+}
+---
+
+<header class="encabezado">
+  <div class="contenedor encabezado__interior">
+    <a class="encabezado__marca" href="/">Benjamin Achibury</a>
+
+    <nav aria-label="Navegación principal">
+      <ul class="encabezado__lista">
+        {
+          enlaces.map((enlace) => (
+            <li>
+              <a
+                href={enlace.href}
+                class:list={['encabezado__enlace', { 'es-activo': esActivo(enlace.href) }]}
+                aria-current={esActivo(enlace.href) ? 'page' : undefined}
+              >
+                {enlace.texto}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  /* Los estilos dentro de <style> en un .astro solo afectan a ESTE
+     componente. Astro le agrega una clase única a cada elemento para
+     que no se filtren al resto del sitio. */
+  .encabezado {
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .encabezado__interior {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--e-3) var(--e-8);
+    padding-block: var(--e-4);
+  }
+
+  /* Identificador discreto, no título: mismo tamaño y peso que los
+     enlaces del menú, apenas diferenciado por el hover. */
+  .encabezado__marca {
+    font-size: 0.875rem;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: var(--texto-suave);
+    text-decoration: none;
+  }
+
+  .encabezado__marca:hover {
+    color: var(--texto);
+  }
+
+  .encabezado__lista {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--e-6);
+    margin: 0;
+    padding: 0;
+    font-size: 0.9375rem;
+  }
+
+  .encabezado__enlace {
+    color: var(--texto-suave);
+    text-decoration: none;
+  }
+
+  .encabezado__enlace:hover {
+    color: var(--texto);
+  }
+
+  .encabezado__enlace.es-activo {
+    color: var(--texto);
+    font-weight: 550;
+  }
+</style>

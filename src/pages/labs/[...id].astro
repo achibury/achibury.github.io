@@ -1,0 +1,38 @@
+---
+/**
+ * Página de detalle de cada lab (/labs/lo-que-sea).
+ *
+ * Los corchetes en el nombre del archivo significan "ruta dinámica":
+ * un solo archivo genera una página por cada lab.
+ *
+ * getStaticPaths() le dice a Astro, durante el build, qué páginas tiene
+ * que crear. Como parte de getLabsPublicados(), los borradores no
+ * generan página en producción: no quedan accesibles ni con la URL
+ * directa.
+ *
+ * render(lab) convierte el Markdown en un componente <Contenido /> que
+ * se inserta en el <slot /> del layout Lab.
+ */
+import { render } from 'astro:content';
+import LabLayout from '../../layouts/Lab.astro';
+import { getLabsPublicados, type Lab } from '../../lib/labs';
+
+export async function getStaticPaths() {
+  const labs = await getLabsPublicados();
+  return labs.map((lab) => ({
+    params: { id: lab.id },
+    props: { lab },
+  }));
+}
+
+interface Props {
+  lab: Lab;
+}
+
+const { lab } = Astro.props;
+const { Content } = await render(lab);
+---
+
+<LabLayout lab={lab}>
+  <Content />
+</LabLayout>
