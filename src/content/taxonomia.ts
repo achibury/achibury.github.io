@@ -9,6 +9,11 @@
  *
  * Para agregar una herramienta nueva: sumala aca, respetando como se
  * escribe oficialmente (mayusculas incluidas). Es el unico lugar.
+ *
+ * ORDEN ALFABETICO, ignorando mayusculas y minusculas. No es estetica:
+ * con la lista ordenada, al ir a agregar algo ves de inmediato si ya
+ * estaba. Sin orden se cuelan duplicados (paso con 'Wireshark', que
+ * llego a estar dos veces).
  */
 
 export const HERRAMIENTAS = [
@@ -18,7 +23,9 @@ export const HERRAMIENTAS = [
   'FTK Imager',
   'KAPE',
   'MISP',
+  'PNETLab',
   'PowerShell',
+  'rsyslog',
   'Sigma',
   'Splunk',
   'Suricata',
@@ -31,9 +38,6 @@ export const HERRAMIENTAS = [
   'Wireshark',
   'YARA',
   'Zeek',
-  'PNETLab',
-  'Wireshark',
-  'rsyslog',
 ] as const;
 
 export type Herramienta = (typeof HERRAMIENTAS)[number];
