@@ -16,6 +16,11 @@
   --superficie: #f8fafc;
   --borde: #e2e8f0;
   --texto: #0f172a;
+  /* Nivel intermedio, para encabezados subordinados. No es decoración:
+     es lo que permite que un h3 se lea como un escalón por debajo del h2
+     sin depender de que el lector compare tamaños. Verificado 10.35:1
+     contra el fondo, muy por encima del mínimo 4.5:1. */
+  --texto-medio: #334155;
   --texto-suave: #475569;
   --acento: #0f766e;
   --acento-fondo: #e6fbf6;
@@ -83,8 +88,16 @@
   --h2-arriba: var(--e-12);
   --h2-abajo: var(--e-4);
   --h2-aire-linea: var(--e-6); /* entre la línea separadora y el texto */
-  --h3-arriba: var(--e-10);
+  --h3-arriba: var(--e-12);
   --h3-abajo: var(--e-2);
+
+  /* Encabezados consecutivos, sin contenido entre medio. Son casos que
+     necesitan su propio valor: con el ritmo normal, dos h3 seguidos
+     quedarían pegados (el segundo pierde su margen por la regla de
+     "lo que sigue a un encabezado") y un h3 justo debajo de un h2
+     acumularía los dos márgenes grandes uno encima del otro. */
+  --h3-tras-h2: var(--e-4);
+  --h3-tras-h3: var(--e-6);
 
   /* --- Anchos ---
      --ancho-prosa limita el texto corrido. La unidad ch equivale al
@@ -108,6 +121,7 @@
     --superficie: #1e293b;
     --borde: #334155;
     --texto: #e2e8f0;
+    --texto-medio: #b4c1d1; /* verificado 9.77:1 contra el fondo */
     --texto-suave: #94a3b8;
     --acento: #5eead4;
     --acento-fondo: #134e4a;

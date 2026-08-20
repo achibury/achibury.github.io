@@ -181,23 +181,26 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
      clases automáticas de Astro. Está acotado a .prosa, o sea que no
      se escapa al resto del sitio. */
 
-  /* --- Encabezados de sección del lab ---
-     Dos señales combinadas para que el corte entre secciones se vea sin
-     necesidad de leer:
+  /* ======================================================================
+     ENCABEZADOS DE SECCIÓN DEL LAB
 
-       1. Margen de arriba varias veces mayor que el de abajo (los
-          valores viven en global.css, bloque "Ritmo de encabezados").
-          El h2 se despega de la sección anterior y se pega a la suya.
-       2. Una línea fina por encima del h2, del mismo gris que el resto
-          de los bordes del sitio.
+     Cada nivel se distingue por VARIAS señales a la vez, no solo por
+     tamaño. Distinguir por tamaño obliga a comparar dos encabezados
+     conscientemente para saber cuál manda; combinar señales deja
+     reconocer el nivel de un vistazo, sin detenerse a leer.
 
-     El h3 usa solo la asimetría, sin línea: así queda claro de un
-     vistazo que es un nivel por debajo y no otro corte de sección. */
+                tamaño   peso   color            señal propia
+       h2       28px     650    --texto          línea separadora arriba
+       h3       21px     550    --texto-medio    barra de acento a la izq.
+       cuerpo   16px     400    --texto          --
+     ====================================================================== */
+
   .prosa :global(h2) {
     margin-top: var(--h2-arriba);
     margin-bottom: var(--h2-abajo);
     padding-top: var(--h2-aire-linea);
     border-top: 1px solid var(--borde);
+    color: var(--texto);
   }
 
   /* El primer encabezado no necesita separarse de nada: viene justo
@@ -208,22 +211,76 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
     border-top: 0;
   }
 
+  /* El h3 baja de peso Y de color respecto al h2. Las dos cosas juntas
+     lo dejan leíble como subordinado sin necesidad de compararlo con
+     nada: 550 contra 650 de peso, y --texto-medio contra --texto. */
   .prosa :global(h3) {
+    position: relative;
     margin-top: var(--h3-arriba);
     margin-bottom: var(--h3-abajo);
+    font-weight: 550;
+    color: var(--texto-medio);
   }
 
-  /* Lo que va justo debajo de un encabezado no aporta su propio margen
-     de arriba.
+  /* Marcador de posición del h3: una barra corta de acento, del alto
+     del texto, que ancla el encabezado a su bloque. Sirve para escanear
+     la página: los h3 se detectan sin leerlos.
 
-     Sin esta regla, los margenes verticales de elementos hermanos se
-     fusionan y gana el mas grande: el margen de abajo del h3 (8px) queda
-     tapado por el de arriba del parrafo (16px), y la asimetria que da
-     legibilidad se pierde justo donde mas importa. Asi el unico gap que
-     manda es el del encabezado. */
-  .prosa :global(h2 + *),
-  .prosa :global(h3 + *) {
+     Va colgando FUERA de la columna de texto (left negativo) para que el
+     h3 siga alineado con el cuerpo; si usara border-left, el texto se
+     correría a la derecha y rompería esa alineación. El desplazamiento
+     cae dentro del padding del contenedor, así que no desborda ni en
+     pantallas de 360px.
+
+     El h2 NO lleva marcador: ya tiene su línea separadora, y sumarle
+     una segunda señal lo acercaría visualmente al h3 en vez de
+     distinguirlo. */
+  .prosa :global(h3)::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--e-3) * -1);
+    top: 0.22em;
+    width: 3px;
+    height: 0.95em;
+    border-radius: 2px;
+    background: var(--acento);
+  }
+
+  /* --- Lo que sigue a un encabezado ---
+     No aporta su propio margen de arriba: el único hueco que manda es el
+     margen de abajo del encabezado. Es lo que lo mantiene pegado a su
+     contenido.
+
+     OJO CON LA ESPECIFICIDAD. `.prosa p`, `.prosa pre` y `.prosa table`
+     traen `margin-block`, que también fija el margen de arriba, y tienen
+     la MISMA especificidad que una regla `h3 + *`. La versión anterior
+     usaba `h3 + *` y quedaba declarada antes que ellas, o sea que las
+     otras ganaban por orden: el hueco bajo un h3 seguido de un bloque de
+     código era de 24px en vez de 8px, y el encabezado flotaba entre su
+     sección y la anterior.
+
+     Nombrar los dos lados con :is() suma un elemento más al selector y
+     gana por especificidad, sin depender de dónde quede escrita. */
+  .prosa
+    :global(:is(h2, h3) + :is(p, ul, ol, pre, table, blockquote, figure, hr)) {
     margin-top: 0;
+  }
+
+  /* --- Encabezados consecutivos ---
+     Dos casos que el ritmo normal resuelve mal:
+
+       h2 + h3  el h3 no debe acumular su margen grande encima del que ya
+                puso el h2; queda pegado, como subtítulo de la sección.
+       h3 + h3  sin esto el segundo quedaría pegado al primero.
+
+     Un h2 después de cualquier cosa conserva su tratamiento completo
+     (línea + margen grande): siempre es un corte mayor. */
+  .prosa :global(h2 + h3) {
+    margin-top: var(--h3-tras-h2);
+  }
+
+  .prosa :global(h3 + h3) {
+    margin-top: var(--h3-tras-h3);
   }
 
   .prosa :global(p),
