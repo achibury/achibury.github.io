@@ -5,7 +5,7 @@ fecha: 2026-08-22
 categoria: "infraestructura"
 herramientas: ["PNETLab", "Nmap"]
 funcion: ["proteger", "identificar"]
-borrador: true
+borrador: false
 ---
 
 ## Contexto
