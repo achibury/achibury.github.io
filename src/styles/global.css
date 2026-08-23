@@ -25,6 +25,12 @@
   --acento: #0f766e;
   --acento-fondo: #e6fbf6;
 
+  /* Fondo del bloque de hallazgo (el blockquote de un lab). Tinte de
+     acento muy leve: tiene que separarse de la pagina sin gritar, porque
+     hay 2-3 por lab y uno estridente repetido cansa.
+     Texto --texto sobre este fondo: 16.21:1. */
+  --hallazgo-fondo: #e9f7f3;
+
   /* Chips (categoría, herramientas, MITRE, función).
      Más oscuros que --superficie a propósito: como son cajas chicas
      rodeadas de texto, con muy poco contraste dejan de leerse como
@@ -109,6 +115,14 @@
   --ancho-prosa: 70ch;
   --ancho-contenedor: 1120px;
 
+  /* Tope de altura para las capturas dentro de un lab. Las capturas de
+     terminal son anchas y bajas, pero un diagrama de topologia es casi
+     cuadrado y sin tope se come la pantalla entera.
+     El min() cubre los dos casos: 70vh en pantallas bajas, y 36rem
+     (576px) como techo absoluto para que en un monitor alto tampoco
+     ocupe media pagina. */
+  --lab-imagen-alto: min(70vh, 36rem);
+
   --radio: 6px;
 }
 
@@ -125,6 +139,7 @@
     --texto-suave: #94a3b8;
     --acento: #5eead4;
     --acento-fondo: #134e4a;
+    --hallazgo-fondo: #1a3a37; /* texto --texto encima: 10.00:1 */
 
     /* Verificado 8.88:1 del texto contra su fondo. */
     --chip-fondo: #2c3a4f;
@@ -303,15 +318,42 @@ code {
   font-size: var(--t-mono);
 }
 
-/* Código dentro de un párrafo, entre comillas simples invertidas.
-   Este SÍ se envuelve: es texto corrido, y partirlo en el salto de
-   línea no rompe nada. La regla de los bloques es la contraria. */
+/* --- Código dentro de un párrafo ---
+   Se trata como una unidad indivisible: el salto de línea ocurre ANTES
+   o DESPUÉS del fragmento completo, nunca adentro.
+
+   El problema que resuelve: un fragmento como `telnet 10.0.10.1` lleva
+   un espacio, y por defecto el navegador corta ahí. "telnet" quedaba al
+   final de un renglón y la IP saltaba al siguiente, y se leían como dos
+   cosas distintas en vez de un comando.
+
+   `white-space: nowrap` lo mantiene entero. Las otras tres propiedades
+   son la GUARDA para fragmentos largos: con nowrap a secas, uno que no
+   entra en la medida de lectura se sale del contenedor y le mete scroll
+   horizontal a la página entera. Al convertirlo en caja propia con tope
+   de ancho, si no entra se desplaza dentro de su propia caja y no
+   arrastra el resto.
+
+   CSS no permite decir "no partas salvo que no quepa": hay que elegir
+   una de las dos, y para fragmentos de una línea esta es la correcta.
+
+   `line-height: 1.4` no es estético: una caja inline-block más alta que
+   el renglón que la contiene estira esa línea y el párrafo queda con
+   interlineado desparejo. Con 1.4 la caja mide 25px contra los 27.2px
+   del renglón, así que no lo empuja. */
 :not(pre) > code {
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: 4px;
   padding: 0.1em 0.35em;
-  overflow-wrap: break-word;
+
+  white-space: nowrap;
+
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  vertical-align: bottom;
+  line-height: 1.4;
 }
 
 /* --- Bloques de código ---

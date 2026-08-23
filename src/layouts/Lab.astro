@@ -302,17 +302,34 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
     margin-block: var(--e-6);
   }
 
-  /* Imágenes: ocupan el ancho disponible, con borde suave para
-     separarlas del fondo. En Markdown se escriben así:
-       ![Texto alternativo](./mi-captura.png)
-     Si la ruta es relativa, Astro optimiza la imagen en el build. */
+  /* --- Imágenes del lab ---
+     En Markdown se escriben así:
+       ![Texto alternativo](/img/labs/mi-lab/captura.png)
+
+     Las capturas tienen proporciones muy distintas: una salida de
+     terminal es ancha y baja (1300x140), un diagrama de topología es
+     casi cuadrado (577x439). Antes esto usaba `width: 100%`, que forzaba
+     a TODAS al ancho del contenedor: el diagrama se estiraba de 577 a
+     1072px, o sea que quedaba de 818px de alto Y ampliado, borroso.
+
+     Ahora manda el tamaño natural, acotado por dos topes:
+       max-width: 100%             no se sale del contenedor
+       max-height: --lab-imagen-alto  no se come la pantalla
+
+     Con `width` y `height` en auto, el navegador respeta la proporción
+     al aplicar cualquiera de los dos topes: no deforma ni recorta, solo
+     escala. Las anchas y bajas no se ven afectadas, porque el que las
+     limita sigue siendo el ancho. */
   .prosa :global(figure) {
     margin: var(--e-8) 0;
   }
 
   .prosa :global(img) {
     display: block;
-    width: 100%;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: var(--lab-imagen-alto);
     border: 1px solid var(--borde);
     border-radius: var(--radio);
   }
@@ -325,11 +342,44 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
     color: var(--texto-suave);
   }
 
+  /* --- Bloque de hallazgo ---
+     En un lab el blockquote NO es una cita: marca el hallazgo clave de
+     una sección. Qué arrojó un escaneo, la evidencia de que un control
+     quedó funcionando. Antes se veía casi igual que un párrafo (mismo
+     tamaño, y encima atenuado con --texto-suave) y esos hallazgos
+     pasaban desapercibidos al escanear la página.
+
+     Tres señales: fondo propio, barra de acento y tamaño intermedio.
+
+     Lo del tamaño es deliberado: 18px queda por encima del cuerpo (16px)
+     y por debajo del h3 (21px). Destaca al escanear sin competir con la
+     estructura de encabezados ni parecer un título.
+
+     Y el color del texto vuelve a --texto: atenuarlo era justamente lo
+     que lo hacía desaparecer.
+
+     Contraste del texto sobre el fondo: 16.21:1 en claro, 10.00:1 en
+     oscuro. Los dos muy por encima del mínimo 4.5:1. */
   .prosa :global(blockquote) {
-    margin: var(--e-6) 0;
-    padding-left: var(--e-4);
-    border-left: 2px solid var(--borde);
-    color: var(--texto-suave);
+    margin-block: var(--e-8);
+    padding: var(--e-4) var(--e-6);
+    border-left: 3px solid var(--acento);
+    border-radius: 0 var(--radio) var(--radio) 0;
+    background: var(--hallazgo-fondo);
+    color: var(--texto);
+    font-size: var(--t-md);
+    line-height: 1.6;
+  }
+
+  /* El primer y el último párrafo de adentro no aportan margen propio:
+     el padding del bloque ya da todo el aire que hace falta. Sin esto el
+     bloque queda con el doble de espacio arriba y abajo del texto. */
+  .prosa :global(blockquote > :first-child) {
+    margin-top: 0;
+  }
+
+  .prosa :global(blockquote > :last-child) {
+    margin-bottom: 0;
   }
 
   .prosa :global(hr) {

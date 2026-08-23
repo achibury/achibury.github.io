@@ -23,6 +23,7 @@ export const HERRAMIENTAS = [
   'FTK Imager',
   'KAPE',
   'MISP',
+  'Nmap',
   'PNETLab',
   'PowerShell',
   'rsyslog',
