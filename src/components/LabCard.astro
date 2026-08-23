@@ -20,8 +20,8 @@ const { titulo, resumen, fecha, categoria, borrador } = lab.data;
 <article class="tarjeta">
   <div class="tarjeta__meta">
     <span class="etiqueta etiqueta--acento">{ETIQUETAS_CATEGORIA[categoria]}</span>
-    <!-- <time> con datetime en formato ISO: legible para personas,
-         interpretable para máquinas. -->
+    {/* <time> con datetime en formato ISO: legible para personas,
+         interpretable para máquinas. */}
     <time class="meta" datetime={fecha.toISOString()}>{formatearFecha(fecha)}</time>
     {
       /* Este aviso solo puede aparecer en `npm run dev`: en producción
@@ -31,9 +31,9 @@ const { titulo, resumen, fecha, categoria, borrador } = lab.data;
   </div>
 
   <h3 class="tarjeta__titulo">
-    <!-- El enlace envuelve solo el título, pero el ::after de más abajo
+    {/* El enlace envuelve solo el título, pero el ::after de más abajo
          lo estira sobre toda la tarjeta para que sea clickeable entera
-         sin anidar enlaces (que rompe la accesibilidad). -->
+         sin anidar enlaces (que rompe la accesibilidad). */}
     <a href={`/labs/${lab.id}/`}>{titulo}</a>
   </h3>
 

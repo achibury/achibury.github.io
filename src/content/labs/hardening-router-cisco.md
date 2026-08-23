@@ -20,7 +20,7 @@ Mi objetivo no era simplemente aplicar una lista de reglas sin sentido. Quería 
 
 Todo montado en PNETLab. Tres nodos:
 
-![Topología del laboratorio en PNETLab](/img/labs/hardening-router-cisco/01-topologia.png)
+![Topología del laboratorio en PNETLab](../../assets/labs/hardening-router-cisco/01-topologia.png)
 
 | Nodo | Rol | Dirección |
 |---|---|---|
@@ -61,7 +61,7 @@ Desde el auditor:
 nmap -sV -Pn 10.0.10.1
 ```
 
-![Escaneo inicial: Telnet y HTTP abiertos](/img/labs/hardening-router-cisco/02-nmap-inicial.png)
+![Escaneo inicial: Telnet y HTTP abiertos](../../assets/labs/hardening-router-cisco/02-nmap-inicial.png)
 
 > **Dos puertos abiertos.** Telnet en el 23 y el servidor web de IOS en el 80. Ninguno de los dos cifra nada.
 
@@ -89,7 +89,7 @@ line vty 0 4
 
 Un puerto abierto se ve en `nmap`. Esto no:
 
-![CDP entregando modelo y versión de IOS](/img/labs/hardening-router-cisco/03-cdp-fuga.png)
+![CDP entregando modelo y versión de IOS](../../assets/labs/hardening-router-cisco/03-cdp-fuga.png)
 
 Desde el switch, en la zona de usuarios, un simple `show cdp neighbors detail` entrega el nombre del equipo, su dirección de gestión, y la versión exacta de IOS: `15.5(2)T`. Con ese dato alguien busca las vulnerabilidades conocidas de esa versión y ya sabe por dónde empezar, sin haber lanzado un solo paquete ofensivo.
 
@@ -141,7 +141,7 @@ Antes de escribir un comando definí qué iba a aplicar y por qué. Once control
 
 Todo desde la consola de PNETLab, nunca por Telnet. A mitad de la configuración se corta el acceso remoto, así que trabajar desde la sesión que vas a matar es garantía de quedarte afuera.
 
-**Base para SSH y credenciales:**
+### Base para SSH y credenciales:
 
 ```
 ip domain-name lab.local
@@ -153,7 +153,7 @@ service password-encryption
 no enable password
 ```
 
-**Restricción de origen:**
+### Restricción de origen:
 
 ```
 ip access-list standard GESTION-PERMITIDA
@@ -163,7 +163,7 @@ ip access-list standard GESTION-PERMITIDA
 
 El `log` en el `deny` es lo que después deja rastro del intento bloqueado. Sin eso la ACL funciona igual, pero no te enteras de que alguien lo intentó.
 
-**Líneas de acceso:**
+### Líneas de acceso:
 
 ```
 line vty 0 4
@@ -178,7 +178,7 @@ line con 0
  logging synchronous
 ```
 
-**SSH y freno a la fuerza bruta:**
+### SSH y freno a la fuerza bruta:
 
 ```
 ip ssh version 2
@@ -190,7 +190,7 @@ login on-failure log
 login on-success log
 ```
 
-**Banner:**
+### Banner:
 
 ```
 banner login ^
@@ -201,7 +201,7 @@ constituir delito segun la Ley 21.459 sobre delitos informaticos.
 ^
 ```
 
-**Servicios, CDP, logging e interfaces:**
+### Servicios, CDP, logging e interfaces:
 
 ```
 no ip http server
@@ -227,7 +227,7 @@ interface Ethernet0/3
 
 Mismo escaneo que en la línea base, tres horas y media después:
 
-![Escaneo final: solo SSH](/img/labs/hardening-router-cisco/04-nmap-final.png)
+![Escaneo final: solo SSH](../../assets/labs/hardening-router-cisco/04-nmap-final.png)
 
 > **Telnet y HTTP desaparecieron.** Queda solo el 22 con SSH 2.0.
 
@@ -247,7 +247,7 @@ telnet: Unable to connect to remote host: Connection refused
 
 Y SSH desde la zona de gestión entra mostrando el banner:
 
-![SSH funcionando con el banner legal](/img/labs/hardening-router-cisco/05-ssh-banner.png)
+![SSH funcionando con el banner legal](../../assets/labs/hardening-router-cisco/05-ssh-banner.png)
 
 ### La ACL haciendo su trabajo
 
@@ -261,7 +261,7 @@ Trying 10.0.10.1, 22 ...
 
 Y en el router quedó el registro:
 
-![Log del intento bloqueado y contadores de la ACL](/img/labs/hardening-router-cisco/06-acl-log.png)
+![Log del intento bloqueado y contadores de la ACL](../../assets/labs/hardening-router-cisco/06-acl-log.png)
 
 ```
 %SEC-6-IPACCESSLOGNP: list GESTION-PERMITIDA denied 0 10.0.20.50 -> 0.0.0.0, 1 packet
@@ -315,7 +315,11 @@ username admin privilege 15 algorithm-type scrypt secret <REDACTADO>
 
 Ahora los hashes salen con prefijo `$9$`
 
-![Cambio del algoritmo de hash a Type 9](/img/labs/hardening-router-cisco/07-mejora-type9.png)
+```
+RTR-LAB#show running-config | include secret
+enable secret 9 $9$<REDACTADO>
+username admin privilege 15 secret 9 $9$<REDACTADO>
+```
 
 La diferencia no está en que "esté cifrado" —ya lo estaba— sino en cuánto cuesta romperlo por fuerza bruta.
 

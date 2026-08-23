@@ -303,8 +303,10 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
   }
 
   /* --- Imágenes del lab ---
-     En Markdown se escriben así:
-       ![Texto alternativo](/img/labs/mi-lab/captura.png)
+     Viven en src/assets/labs/<slug>/ y se referencian con ruta relativa
+     desde el .md, para que Astro las procese (WebP, dimensiones, carga
+     diferida). Ver "Capturas e imágenes de un lab" en CLAUDE.md:
+       ![Texto alternativo](../../assets/labs/mi-lab/captura.png)
 
      Las capturas tienen proporciones muy distintas: una salida de
      terminal es ancha y baja (1300x140), un diagrama de topología es
@@ -361,14 +363,26 @@ const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, 
      Contraste del texto sobre el fondo: 16.21:1 en claro, 10.00:1 en
      oscuro. Los dos muy por encima del mínimo 4.5:1. */
   .prosa :global(blockquote) {
-    margin-block: var(--e-8);
-    padding: var(--e-4) var(--e-6);
-    border-left: 3px solid var(--acento);
+    /* margin-inline: 0 NO es redundante.
+       El navegador le aplica al blockquote un `margin-inline: 40px` por
+       su cuenta, en su hoja de estilos por defecto. Fijar solo
+       `margin-block` deja ese valor vivo, y el bloque arranca 40px a la
+       derecha del párrafo y del bloque de código que tiene al lado.
+       Con esto el borde izquierdo del bloque queda alineado con el del
+       resto del cuerpo del lab. */
+    margin-block: var(--e-6);
+    margin-inline: 0;
+
+    padding: var(--e-3) var(--e-4);
+    border-left: 2px solid var(--acento);
     border-radius: 0 var(--radio) var(--radio) 0;
     background: var(--hallazgo-fondo);
     color: var(--texto);
-    font-size: var(--t-md);
-    line-height: 1.6;
+
+    /* Mismo tamaño que el cuerpo. Lo que lo hace destacar es el fondo y
+       la barra de acento, no el tamaño: a 18px competía con el h3 (21px)
+       y el ojo lo leía como si fuera otro nivel de encabezado. */
+    font-size: var(--t-base);
   }
 
   /* El primer y el último párrafo de adentro no aportan margen propio:

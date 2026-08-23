@@ -240,6 +240,71 @@ Esa regla tiene que aplicarse en tres lugares (home, listado y ruta dinámica).
 Está escrita **una sola vez** en `getLabsPublicados()`. No la dupliques en las
 páginas: la copia se desactualiza y se te publica un borrador sin querer.
 
+## Capturas e imágenes de un lab
+
+### Cuándo va imagen y cuándo va bloque de código
+
+**Una captura de terminal que es solo texto va como bloque de código, no
+como imagen.** Siempre.
+
+Un `nmap`, un `show running-config`, un log: pegarlos como texto en un
+bloque ```` ``` ```` es mejor en todo. Se puede copiar, buscar con Ctrl+F,
+lo lee un lector de pantalla, pesa mil veces menos, escala en cualquier
+pantalla y no queda borroso al hacer zoom. Una captura de eso mismo no
+aporta nada que el texto no tenga, y encima obliga a revisarla por
+separado antes de publicar (ahí fue donde casi se filtra un hash real:
+el texto estaba redactado y la imagen no).
+
+Las imágenes se reservan para lo que el texto **no** puede transmitir:
+
+- diagramas de topología
+- interfaces gráficas (Kibana, Wireshark, la consola de un EDR)
+- cualquier cosa donde la disposición visual sea el contenido
+
+### Dónde van
+
+En `src/assets/labs/<slug-del-lab>/`, **no** en `public/`. Se referencian
+con ruta **relativa** desde el `.md`:
+
+```markdown
+![Texto alternativo](../../assets/labs/mi-lab/01-topologia.png)
+```
+
+Al estar bajo `src/`, Astro las procesa durante el build y sale gratis:
+conversión a WebP (-41% de peso medido), `width` y `height` en el HTML
+(sin salto de maquetación al cargar), `loading="lazy"` y nombre con hash
+de contenido.
+
+Con ruta absoluta a `public/` no pasa **nada** de eso: el archivo se copia
+tal cual, sin optimizar y sin dimensiones.
+
+Por qué `src/assets/` y no dentro de `src/content/labs/`: el loader de la
+colección hace glob de `**/*.md` de forma recursiva sobre esa carpeta. Si
+las imágenes viven ahí y algún día cae un `README.md` o una nota suelta
+en la carpeta de un lab, ese archivo se convierte en una entrada de la
+colección y rompe el build. Manteniendo `src/content/labs/` con puros
+`.md` de labs, ese problema no existe.
+
+### Las capturas de un lab en borrador NO entran al repo
+
+Mientras el lab tenga `borrador: true`, sus capturas se quedan **fuera
+del repositorio** (por ejemplo en `notas/`, que está en `.gitignore`).
+Se mueven a `src/assets/labs/<slug>/` recién al publicarlo.
+
+No es una preferencia de orden, es lo único que funciona. Se probó y
+quedó descartado lo demás:
+
+- Bajo `public/`, el archivo se copia a `dist/` siempre, sin pasar por el
+  filtro de borradores, y queda en una URL adivinable.
+- Bajo `src/`, Vite igual emite el asset a `dist/_astro/` aunque la página
+  del lab no se genere. Mejora (el nombre lleva hash y no es enumerable)
+  pero no lo impide.
+- `deferRender: true` en el loader **tampoco** lo impide. Se probó.
+
+Y sobre todo: el repositorio es público. Una captura commiteada es
+pública desde el commit, esté o no en `dist/`. El momento de revisarla
+por datos sensibles es **antes** de `git add`, no antes de publicar.
+
 ## Sistema de diseño
 
 Todo vive en el `:root` de `src/styles/global.css`. Reestilizar debería ser
@@ -347,9 +412,26 @@ variables `--shiki-dark` que `global.css` activa por media query.
 
 ## Páginas y layouts
 
-- `src/layouts/Base.astro` envuelve todas las páginas y **contiene el
-  `noindex`** que hay que quitar antes de publicar. Título:
+- `src/layouts/Base.astro` envuelve todas las páginas. Título:
   `${titulo} · Benjamin Achibury`.
+
+  **El sitio ya es indexable.** El `<meta name="robots" content="noindex">`
+  que estuvo durante todo el desarrollo se quitó al publicar. Si alguna vez
+  hace falta volver a esconderlo (una reescritura grande, por ejemplo), se
+  agrega de nuevo acá y además hay que revisar `public/robots.txt` y el
+  sitemap, que hoy invitan a indexar.
+
+  Arma también los metadatos de compartido: `canonical`, Open Graph y
+  Twitter cards. Todos toman título y descripción de las props de cada
+  página, así que cada lab comparte su propio título y resumen; no hay
+  valores fijos que actualizar. La URL sale de
+  `new URL(Astro.url.pathname, Astro.site)`, o sea que si cambia el
+  dominio se cambia en `astro.config.mjs` y listo.
+
+  La `og:image` es fija para todo el sitio: `public/og.png` (1200×630),
+  referenciada con `new URL('/og.png', Astro.site)`. Tiene que ser URL
+  absoluta porque LinkedIn y compañía leen la etiqueta desde sus propios
+  servidores, donde `/og.png` no significa nada.
 - `src/layouts/Lab.astro` arma la cabecera del lab y estila el HTML que sale
   del Markdown con `:global()` acotado a `.prosa`.
 - `src/pages/404.astro` compila a `dist/404.html`, que GitHub Pages sirve
@@ -378,11 +460,14 @@ variables `--shiki-dark` que `global.css` activa por media query.
 - `src/content.config.ts` define la colección `labs` con la Content Layer API de
   Astro 5+ (`loader: glob(...)`), no la carpeta mágica de versiones viejas.
 - `src/styles/global.css` concentra los tokens de diseño arriba del archivo.
-- `public/` contiene assets estáticos servidos tal cual. El favicon es
-  **solo** `favicon.svg` (monograma BA): el `.ico` se borró a propósito para
-  no mantener dos archivos sincronizados, y todos los navegadores en uso
-  soportan favicons en SVG. `public/img/captura-ejemplo.svg` es un placeholder
-  gris, hay que reemplazarlo por capturas reales.
+- `public/` contiene assets estáticos servidos tal cual, **sin pasar por
+  el filtro de borradores ni por la optimización de imágenes**. Hoy tiene
+  un solo archivo: `favicon.svg` (monograma BA). El `.ico` se borró a
+  propósito para no mantener dos archivos sincronizados, y todos los
+  navegadores en uso soportan favicons en SVG.
+  Las capturas de los labs **no** van acá: ver "Capturas e imágenes".
+- `src/assets/labs/<slug>/` guarda las capturas de cada lab, para que
+  Astro las procese en el build.
 - `astro.config.mjs` define `site: 'https://achibury.github.io'`, necesario para que las URLs absolutas salgan bien en GitHub Pages. Al ser sitio de usuario (no de proyecto), no lleva `base`.
 - `tsconfig.json` extiende el preset `strict` de Astro.
 - Despliegue automático: `.github/workflows/deploy.yml` compila con `withastro/action@v3` (Node 22) y publica con `actions/deploy-pages` en cada push a `main`.
@@ -407,6 +492,46 @@ y contra la documentación oficial:
   para importarlo en `astro.config.mjs` conviene declararlo en `package.json`.
 
 No está implementado. Queda como decisión pendiente, no como algo cerrado.
+
+**La imagen de Open Graph es una sola para todo el sitio.** Cualquier
+página que se comparta muestra la misma tarjeta, con el nombre y la línea
+de posicionamiento; no dice de qué lab se trata. Generar una por lab, con
+el título dibujado encima, se evaluó y se descartó: pide una dependencia
+de dibujo y una ruta que la sirva, y para un portafolio de este tamaño no
+compensa. Queda como mejora posible, no como deuda.
+
+## Indexación
+
+El sitio está **publicado e indexable**. Tres piezas que trabajan juntas:
+
+| Pieza | Dónde | Qué hace |
+| --- | --- | --- |
+| `canonical` + Open Graph | `src/layouts/Base.astro` | URL oficial de cada página y tarjeta de vista previa |
+| `sitemap-index.xml` | lo genera `@astrojs/sitemap` | lista de URLs para los buscadores |
+| `robots.txt` | `public/robots.txt` | permite todo y apunta al sitemap |
+
+**El sitemap no necesita filtrar borradores.** Solo lista páginas que
+existen en `dist/`, y un lab en borrador no genera página, así que queda
+fuera solo. Lo que sí lleva filtro explícito en `astro.config.mjs` es la
+404: es una respuesta de error, no contenido, y no corresponde en un mapa
+del sitio.
+
+**Si algún día vuelve el `noindex`**, hay que tocar las tres piezas, no
+solo el meta: un sitemap que anuncia URLs mientras el HTML pide no
+indexarlas es una contradicción que los buscadores resuelven mal.
+
+### La imagen de vista previa
+
+`public/og.png` (1200×630) se genera con:
+
+```
+node scripts/generar-og.mjs
+```
+
+El script usa `sharp`, que ya viene con Astro para optimizar imágenes, o
+sea que no agrega dependencias. Los colores salen de la paleta del modo
+oscuro de `global.css`. Hay que volver a correrlo si cambia el nombre o la
+línea de posicionamiento; el archivo generado se commitea.
 
 ## Documentación
 

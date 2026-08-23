@@ -1,7 +1,24 @@
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://achibury.github.io',
+
+  integrations: [
+    /**
+     * Genera sitemap-index.xml y sitemap-0.xml en el build.
+     *
+     * Solo lista paginas que EXISTEN en dist/, asi que los labs en
+     * borrador quedan fuera solos: como no se genera su pagina, no hay
+     * nada que listar. No hace falta filtrarlos a mano.
+     *
+     * El filtro de abajo saca la pagina 404: es una respuesta de error,
+     * no contenido, y no tiene por que aparecer en el mapa del sitio.
+     */
+    sitemap({
+      filter: (pagina) => !pagina.endsWith('/404/'),
+    }),
+  ],
 
   markdown: {
     // Resaltado de sintaxis de los bloques de codigo en los labs.

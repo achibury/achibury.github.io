@@ -75,10 +75,6 @@ powershell.exe -Command "&('Get-Pro'+'cess')"
 powershell.exe -w hidden -nop -ep bypass -c "Get-Process"
 ```
 
-![Vista de los eventos de creación de proceso en Kibana](/img/captura-ejemplo.svg)
-
-*Los tres comandos aparecen en el índice, con la línea de comandos completa.*
-
 ## Lo que se vio en los logs
 
 El hallazgo importante: **`-EncodedCommand` no oculta nada frente a Sysmon.**

@@ -20,6 +20,30 @@ interface Props {
 
 const { titulo, descripcion } = Astro.props;
 const tituloCompleto = `${titulo} · Benjamin Achibury`;
+
+/**
+ * URL absoluta de ESTA página.
+ *
+ * `Astro.url` es la dirección que se está generando y `Astro.site` es el
+ * `site` de astro.config.mjs (https://achibury.github.io). Combinarlas da
+ * la URL absoluta y completa, que es lo que exigen tanto la etiqueta
+ * canonical como Open Graph: una ruta relativa ahí no sirve.
+ *
+ * Se calcula por página, no se escribe a mano: si mañana cambia el
+ * dominio, cambia en un solo lugar y todas las páginas lo siguen.
+ */
+const urlCanonica = new URL(Astro.url.pathname, Astro.site);
+
+/**
+ * Imagen de vista previa, la misma para todo el sitio.
+ *
+ * Tiene que ser una URL ABSOLUTA: LinkedIn, WhatsApp y compañía leen la
+ * etiqueta desde sus propios servidores, donde una ruta como "/og.png" no
+ * significa nada. Por eso se arma con Astro.site en vez de escribirla a mano.
+ *
+ * El archivo se genera con `node scripts/generar-og.mjs`.
+ */
+const urlImagenOG = new URL('/og.png', Astro.site);
 ---
 
 <!doctype html>
@@ -27,29 +51,53 @@ const tituloCompleto = `${titulo} · Benjamin Achibury`;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Monograma BA en public/favicon.svg. Se sirve solo el SVG: un
+    {/* Monograma BA en public/favicon.svg. Se sirve solo el SVG: un
          .ico aparte seria otro archivo que mantener sincronizado, y todos
-         los navegadores en uso soportan favicons en SVG. -->
+         los navegadores en uso soportan favicons en SVG. */}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
 
     <title>{tituloCompleto}</title>
     {descripcion && <meta name="description" content={descripcion} />}
 
-    <!-- ===================================================================
-         ⚠️  QUITAR ESTA LÍNEA ANTES DE PUBLICAR  ⚠️
+    {/* La dirección "oficial" de esta página. Le dice a los buscadores
+        cuál es la versión buena si llegan por una URL con parámetros o
+        con barra final distinta, para que no la cuenten dos veces. */}
+    <link rel="canonical" href={urlCanonica} />
 
-         Mientras esté acá, el sitio le pide a Google y demás buscadores
-         que NO lo indexen ni sigan sus enlaces. Sirve para trabajar
-         tranquilo con el sitio ya desplegado y sin que aparezca en
-         búsquedas.
+    {/* Open Graph: lo que leen LinkedIn, WhatsApp, Slack y compañía para
+        armar la tarjeta de vista previa cuando alguien comparte el enlace.
+        Sin esto se ve la URL pelada, sin título ni descripción.
 
-         Cuando el portafolio esté listo para que lo vea gente:
-         borra la etiqueta <meta name="robots"> de abajo y vuelve a
-         hacer push. Si no la borras, el sitio queda invisible.
-         =================================================================== -->
-    <meta name="robots" content="noindex, nofollow" />
-    <!-- ============ FIN DEL BLOQUE A QUITAR ANTES DE PUBLICAR ============ -->
+        Título y descripción salen de las props de cada página, no son
+        valores fijos: cada lab comparte su propio título y resumen.
+
+        La imagen es fija para todo el sitio (public/og.png, 1200×630).
+        Podría generarse una por lab con el título dibujado encima, pero
+        eso pide una dependencia de dibujo y una ruta que la sirva; para
+        un portafolio de este tamaño no compensa. */}
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={urlCanonica} />
+    <meta property="og:title" content={tituloCompleto} />
+    {descripcion && <meta property="og:description" content={descripcion} />}
+    <meta property="og:locale" content="es_CL" />
+    <meta property="og:site_name" content="Benjamin Achibury" />
+    <meta property="og:image" content={urlImagenOG} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Benjamin Achibury — Portafolio de ciberseguridad defensiva"
+    />
+
+    {/* Twitter/X usa su propio juego de etiquetas. `summary_large_image`
+        es la tarjeta con la imagen grande arriba, que es la que
+        corresponde ahora que hay og:image de 1200×630. */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={tituloCompleto} />
+    {descripcion && <meta name="twitter:description" content={descripcion} />}
+    <meta name="twitter:image" content={urlImagenOG} />
+
   </head>
 
   <body>

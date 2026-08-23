@@ -1,0 +1,7 @@
+# Portafolio de Benjamin Achibury — https://achibury.github.io
+# Todo el sitio es publico y indexable.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://achibury.github.io/sitemap-index.xml
