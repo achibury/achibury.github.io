@@ -42,8 +42,6 @@ Cosas abiertas a hoy, verificadas contra el código:
   botón roto. Se activa sola al dejar el PDF ahí.
 - **`hayCertificaciones` está en `false`** en `sobre-mi.astro`, porque
   todavía no hay ninguna. El markup ya está escrito esperando.
-- Los párrafos de presentación de `/sobre-mi` siguen siendo texto de
-  relleno marcado con comentarios `REEMPLAZAR`.
 - **V2 — el header envuelve en dos filas a 360px.** Medido con las
   métricas reales de Segoe UI a 14px: el menú completo mide 212px y el
   ancho disponible a 360px es 312px (360 menos 24 de padding por lado).
@@ -637,8 +635,17 @@ variables `--shiki-dark` que `global.css` activa por media query.
     hay ninguna. El markup ya está escrito esperando; el comentario del
     archivo tiene los pasos para reactivarla.
 
-  Los comentarios `REEMPLAZAR` de esa página son `{/* ... */}` de Astro:
-  quedan en el código fuente y **no** se publican.
+  **Ya no queda texto de relleno en esa página**: la presentación son
+  cuatro párrafos reales y los comentarios `REEMPLAZAR` se fueron con
+  ellos. Si vuelves a dejar uno, que sea `{/* ... */}` de Astro, que
+  queda en el código fuente y **no** se publica.
+
+  **No hay sección "Áreas de interés", y es a propósito.** La había, con
+  una lista escrita a mano, y se quitó porque prometía áreas que los labs
+  ya declaran con evidencia (`categoria`, `herramientas` y `funcion`
+  del frontmatter). El hueco quedó con un comentario que explica cómo
+  regenerarla desde los labs publicados si algún día vuelve. No la
+  reintroduzcas escrita a mano.
 
 ## Arquitectura
 
@@ -908,12 +915,18 @@ Cuatro cosas que no son obvias:
   contuviera la secuencia de cierre de un script cerraría el bloque antes
   de tiempo y volcaría el resto como HTML.
 
+El `Person` lleva `jobTitle`, `description`, `alumniOf` (el instituto,
+como `EducationalOrganization`) y `address` con ciudad y país. La
+`description` es un resumen del primer párrafo de la presentación,
+**escrito a mano en el objeto**, no derivado del HTML: el párrafo puede
+crecer o partirse en dos y la descripción tiene que seguir siendo una
+frase. Si editas ese párrafo, revisa el campo.
+
 Campos que **faltan por falta de dato**, no por olvido: el `Person` no
-lleva `jobTitle` ni `description` porque los párrafos de presentación
-siguen siendo relleno marcado `REEMPLAZAR`, ni `image` porque no hay foto
-en el repo. Y el `image` del `TechArticle` es el `og.png` genérico del
-sitio, no una imagen del lab: es honesto (es la imagen social de esa
-página) pero no ilustra el contenido.
+lleva `image` porque no hay foto en el repo. Y el `image` del
+`TechArticle` es el `og.png` genérico del sitio, no una imagen del lab:
+es honesto (es la imagen social de esa página) pero no ilustra el
+contenido.
 
 **"Enforce HTTPS" está activado** en Settings → Pages del repositorio
 (confirmado). GitHub Pages no deja configurar cabeceras HTTP, así que esa

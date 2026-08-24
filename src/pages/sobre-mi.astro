@@ -5,9 +5,9 @@
  * Es texto fijo, así que vive directamente en esta página: no necesita
  * colección ni Markdown.
  *
- * Todo lo que hay que reemplazar está marcado con un comentario que
- * empieza con REEMPLAZAR, justo encima del bloque correspondiente.
- * Esos comentarios NO se publican: quedan solo en el código fuente.
+ * El texto de presentación ya es real; no queda relleno pendiente.
+ * Lo único que sigue apagado son las dos secciones condicionales
+ * (currículum y certificaciones), cada una documentada en su bandera.
  */
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -51,15 +51,17 @@ const hayCertificaciones = false;
  * src/lib/sitio.ts y es la misma constante que usa el enlace de la
  * sección de contacto, así que no pueden quedar desincronizados.
  *
+ * `description` es un resumen del primer párrafo de la presentación. Se
+ * escribe acá y no se deriva del HTML a propósito: el párrafo puede
+ * crecer o partirse en dos, y la descripción para buscadores tiene que
+ * seguir siendo una frase.
+ *
  * Lo que NO lleva, a propósito:
  *
  *   - `email`. La página parte el correo en dos con un <span> justamente
  *     para que no lo barran los recolectores (ver "NO TOCAR" punto 5 en
  *     CLAUDE.md). Publicarlo en un JSON-LD lo entregaría entero y en
  *     texto plano, anulando toda esa protección.
- *   - `jobTitle` y `description`. Los párrafos de presentación siguen
- *     siendo texto de relleno marcado con REEMPLAZAR, así que no hay de
- *     dónde sacarlos sin inventarlos.
  *   - `image`. No hay foto en el repositorio.
  */
 const datosEstructurados = {
@@ -68,10 +70,25 @@ const datosEstructurados = {
   name: AUTOR,
   url: new URL('/', Astro.site).href,
   sameAs: PERFILES,
+  jobTitle: 'Estudiante de ingeniería en ciberseguridad',
+  description:
+    'Estudiante de ingeniería en ciberseguridad en el Instituto Profesional ' +
+    'AIEP, orientado a la seguridad defensiva.',
+  // El mismo dato que muestra la ficha de "Formacion academica" de esta
+  // pagina. Va como EducationalOrganization y no como texto suelto para
+  // que el buscador lo lea como una entidad y no como una cadena.
+  alumniOf: {
+    '@type': 'EducationalOrganization',
+    name: 'Instituto Profesional AIEP',
+  },
   // `addressCountry` no es propiedad directa de Person: va dentro de un
-  // PostalAddress. Solo el pais, que es el dato que hay y el que
-  // interesa; no hay ciudad ni direccion publicada en el sitio.
-  address: { '@type': 'PostalAddress', addressCountry: 'CL' },
+  // PostalAddress. Solo ciudad y pais: son los datos que hay, y no hay
+  // direccion particular publicada en el sitio ni la va a haber.
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Santiago',
+    addressCountry: 'CL',
+  },
   mainEntityOfPage: {
     '@type': 'WebPage',
     '@id': new URL(Astro.url.pathname, Astro.site).href,
@@ -93,27 +110,31 @@ const datosEstructurados = {
     <section class="seccion">
       <h2 class="titulo-seccion">Presentación</h2>
 
-      {/* REEMPLAZAR: los tres párrafos de abajo.
-          Sugerencia de contenido para cada uno:
-            1. Quién eres y en qué estás hoy.
-            2. Qué te interesa del blue team y por qué.
-            3. Cómo trabajas, o qué busca quien te lea (práctica, memoria,
-               primer empleo).
-          Con dos párrafos alcanza si el tercero te sale forzado. */}
+      {/* Si editas el primer párrafo, revisa `description` en el JSON-LD
+          de arriba: es un resumen de este mismo texto y no se genera solo. */}
       <div class="bloque-texto">
         <p>
-          Soy estudiante de ingeniería en ciberseguridad en Chile, enfocado en
-          seguridad defensiva. Este portafolio reúne los laboratorios que monto
-          para aprender, documentados de principio a fin.
+          Estudio ingeniería en ciberseguridad en el Instituto Profesional AIEP.
+          Me oriento al lado defensivo: entender cómo funciona un sistema para
+          mejorarlo, en lugar de romperlo.
         </p>
         <p>
-          Me interesa el lado defensivo por una razón concreta: detectar bien es
-          más difícil que atacar, porque hay que separar la señal del ruido de
-          la operación diaria. Cada lab que publico apunta a esa pregunta.
+          Llegué acá por la tecnología en general, pero la seguridad fue lo que
+          se quedó. Me interesa el trabajo que exige leer una situación completa
+          antes de actuar, y donde el problema de hoy no es el mismo de la
+          semana pasada.
         </p>
         <p>
-          Documento también lo que sale mal. Un lab donde todo funciona a la
-          primera enseña menos que uno donde hubo que corregir el rumbo.
+          Todavía no tengo experiencia laboral en el área, así que construyo
+          evidencia: monto laboratorios, los documento, y publico acá lo que
+          aprendí, incluyendo lo que se rompió y las decisiones que tomé mal.
+          Un writeup donde todo sale bien al primer intento no le sirve a nadie.
+        </p>
+        <p>
+          Apunto a detección y DFIR, idealmente dentro de un equipo SOC, claro
+          sin desestimar por el momento áreas como GRC y Cloud security. Me
+          interesa llegar a ser un aporte técnico concreto, no solo alguien que
+          conoce la teoría.
         </p>
       </div>
     </section>
@@ -168,21 +189,24 @@ const datosEstructurados = {
       )
     }
 
-    {/* ================= ÁREAS DE INTERÉS ================= */}
-    <section class="seccion">
-      <h2 class="titulo-seccion">Áreas de interés</h2>
+    {/* ========= ÁREAS DE INTERÉS: NO EXISTE, Y ES A PROPÓSITO =========
 
-      {/* REEMPLAZAR: quédate con las que de verdad te interesan y borra el
-          resto. Una lista corta y específica dice más que una larga y
-          genérica. */}
-      <ul class="lista-simple">
-        <li>Ingeniería de detección y escritura de reglas (Sigma, YARA)</li>
-        <li>Análisis de logs y monitoreo con SIEM</li>
-        <li>Respuesta a incidentes y análisis forense (DFIR)</li>
-        <li>Threat hunting y modelado de amenazas con MITRE ATT&CK</li>
-        <li>Cumplimiento y marcos de referencia (ISO 27001, NIST CSF)</li>
-      </ul>
-    </section>
+        Acá había una lista de áreas de interés escrita a mano. Se quitó
+        porque duplicaba, en forma de promesa, lo que los labs ya declaran
+        como evidencia: `categoria`, `herramientas` y `funcion` del
+        frontmatter dicen en qué se trabajó de verdad. Una lista al lado
+        que anuncia temas sin lab que los respalde resta en vez de sumar.
+
+        SI ALGÚN DÍA VUELVE, que se genere sola: leer los labs publicados
+        con `getLabsPublicados()` (src/lib/labs.ts, el único punto de
+        lectura de la colección), juntar los valores de esos tres campos y
+        mostrar los más repetidos. Así la sección no puede prometer nada
+        que no esté publicado, y se actualiza al escribir el próximo lab
+        en vez de al acordarse de editar esta página.
+
+        Hoy no compensa: con un solo lab publicado, la lista generada
+        tendría una entrada. Vale la pena cuando haya varios.
+    ================================================================= */}
 
     {/* ================= CURRÍCULUM ================= */}
     {/* Esta seccion entera aparece SOLO si existe public/cv.pdf.
