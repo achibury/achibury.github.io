@@ -1,0 +1,52 @@
+---
+/**
+ * La marca "BA" del header, en SVG incrustado.
+ *
+ * Va incrustado y no como <img src="/logo.svg"> por una razón concreta:
+ * `currentColor` se resuelve contra el documento donde vive el SVG. En
+ * un <img> el SVG es su propio documento, así que no vería ni el color
+ * del texto ni las variables de global.css y no se adaptaría al tema.
+ * Incrustado hereda las dos cosas gratis, sin duplicar el archivo ni
+ * escribir un solo media query acá.
+ *
+ * La geometría NO está escrita en este archivo: sale de src/lib/logo.ts,
+ * que es la fuente única de la que también salen el favicon y el SVG de
+ * avatares. No pegues un `d` acá.
+ *
+ * El alto lo fija quien lo usa. A 26px el monograma mide 40x26.
+ */
+import { MARCA } from '../lib/logo';
+
+interface Props {
+  /** Alto en píxeles. El ancho sale de la relación de aspecto. */
+  alto?: number;
+  /** Clase extra para el <svg>. */
+  class?: string;
+}
+
+const { alto = 26, class: clase } = Astro.props;
+
+/**
+ * Se declaran width y height en el HTML para que el navegador reserve
+ * el espacio antes de pintar y no haya salto de maquetación.
+ */
+const ancho = Math.round((alto * MARCA.ancho) / MARCA.alto);
+---
+
+<svg
+  class={clase}
+  width={ancho}
+  height={alto}
+  viewBox={`0 0 ${MARCA.ancho} ${MARCA.alto}`}
+  aria-hidden="true"
+  focusable="false"
+>
+  {/* Las letras toman el color del texto de alrededor. */}
+  <path d={MARCA.monograma} fill="currentColor" />
+  {/*
+    El trapecio es el travesaño de la A. NO es decorativo: sin él la A
+    se lee como una Λ, está comprobado a 16px. Va en el acento del sitio,
+    que ya cambia solo con el tema en global.css.
+  */}
+  <path d={MARCA.trapecio} fill="var(--acento)" />
+</svg>

@@ -291,7 +291,7 @@ La salida fue apuntar Telnet al puerto de SSH:
 telnet 10.0.10.1 22
 ```
 
-Como la ACL se evalúa en la línea VTY sin importar el protocolo, el rechazo ocurre igual y queda registrado igual. No es la prueba ideal —no verifica el intercambio SSH— pero sí verifica exactamente lo que la ACL debe hacer: cortar la conexión antes de la autenticación.
+Como la ACL se evalúa en la línea VTY sin importar el protocolo, el rechazo ocurre igual y queda registrado igual. No es la prueba ideal (no verifica el intercambio SSH) pero sí verifica exactamente lo que la ACL debe hacer: cortar la conexión antes de la autenticación.
 
 ## Revisión de la configuración final
 

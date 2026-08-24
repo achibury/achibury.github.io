@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BA">
-  <rect width="512" height="512" rx="113" fill="#0f172a"/>
-  <g transform="translate(35.65 112.64) scale(0.82391)">
+  <circle cx="256" cy="256" r="256" fill="#0f172a"/>
+  <g transform="translate(75 138.24) scale(0.67678)">
     <path d="M0 0H60V348H0ZM0 0H148A98 98 0 0 1 148 196H0ZM60 139H148.5A41.5 41.5 0 0 0 148.5 56H60ZM0 147.66H236.68L156.41 291H0ZM0 291H237.07A95 95 0 0 1 150 348H0ZM60 291H105.65A47.5 47.5 0 0 0 105.65 196H60ZM340 0L534.88 348L468.88 348L340 117.86L243.04 291L177.04 291Z" fill="#e2e8f0"/>
     <path d="M287.84 236L392.16 236L421.28 288L258.72 288Z" fill="#5eead4"/>
   </g>

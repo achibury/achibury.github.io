@@ -2,10 +2,17 @@
 /**
  * Encabezado con la navegación principal.
  *
- * El nombre de la izquierda es el enlace al home: por eso "Inicio" no
- * está en el menú. Está estilado como identificador discreto (chico,
- * peso normal, color atenuado) a propósito — la jerarquía fuerte de la
- * home es el H1, no el header.
+ * La marca de la izquierda es el enlace al home: por eso "Inicio" no
+ * está en el menú. El nombre en texto se reemplazó por el monograma; el
+ * dibujo sale de src/lib/logo.ts, que es la fuente única de la marca.
+ *
+ * Va a 26px de alto. El header medía 56,8px (14px x 1,7 de línea + 16
+ * de relleno arriba y abajo + 1 de borde) y pasa a 59px, porque la fila
+ * mide lo que mida el elemento más alto. Ese relleno NO es holgura: todo
+ * píxel que el logo pase de 23,8 estira el header uno a uno.
+ *
+ * El nombre accesible lo pone el aria-label del enlace, y el SVG va con
+ * aria-hidden para que no se anuncie dos veces.
  *
  * Los enlaces salen del array `enlaces`: para agregar una sección al
  * menú, agregas un objeto acá y listo, no hay que tocar el HTML.
@@ -15,6 +22,8 @@
  * parado (visualmente y con aria-current, que lo anuncian los
  * lectores de pantalla).
  */
+import Logo from './Logo.astro';
+
 const enlaces = [
   { href: '/labs/', texto: 'Labs' },
   { href: '/herramientas/', texto: 'Herramientas' },
@@ -31,7 +40,9 @@ function esActivo(href: string): boolean {
 
 <header class="encabezado">
   <div class="contenedor encabezado__interior">
-    <a class="encabezado__marca" href="/">Benjamin Achibury</a>
+    <a class="encabezado__marca" href="/" aria-label="Inicio — Benjamin Achibury">
+      <Logo alto={26} />
+    </a>
 
     <nav aria-label="Navegación principal">
       <ul class="encabezado__lista">
@@ -70,12 +81,20 @@ function esActivo(href: string): boolean {
     padding-block: var(--e-4);
   }
 
-  /* Identificador discreto, no título: mismo tamaño y peso que los
-     enlaces del menú, apenas diferenciado por el hover. */
+  /* El enlace de la marca.
+
+     `display: flex` no es decorativo: un <svg> es inline por defecto y
+     se apoya en la línea de base, lo que agrega unos píxeles de hueco
+     abajo por el espacio de los descendentes y descuadra el centrado
+     contra el menú. Con flex el SVG deja de ser inline y el hueco
+     desaparece.
+
+     El `color` es lo que pinta las letras del monograma: el SVG las
+     dibuja con `currentColor`, así que hereda de acá y el hover las
+     aclara igual que a los enlaces del menú. El trapecio no cambia:
+     va en --acento. */
   .encabezado__marca {
-    font-size: var(--t-sm);
-    font-weight: 400;
-    letter-spacing: 0.01em;
+    display: flex;
     color: var(--texto-suave);
     text-decoration: none;
   }
@@ -84,18 +103,48 @@ function esActivo(href: string): boolean {
     color: var(--texto);
   }
 
+  /* GAP DE 20px, que la escala no tiene.
+
+     La escala salta de --e-4 (16px) a --e-6 (24px) y los dos extremos
+     fallan: con 16 los enlaces se aprietan entre si, y con 24 el grupo
+     vuelve a leerse como tres elementos sueltos en vez de un bloque que
+     le haga contrapeso al logo. 20 es el punto donde respiran sin
+     desarmarse, y sale de sumar dos tokens en vez de escribir un pixel
+     suelto.
+
+     NO lo bajes a --e-4 "para ganar espacio en movil". Esta medido: a
+     360px hay 312px disponibles y el header ocupa 281 con este gap, o
+     sea 31px de holgura. Incluso con 24 sobran 23px. El ancho nunca fue
+     la restriccion — yo mismo lo aprete a 16 creyendo que si, y lo unico
+     que consegui fue el apretujamiento. */
   .encabezado__lista {
     list-style: none;
     display: flex;
     flex-wrap: wrap;
-    gap: var(--e-6);
+    gap: calc(var(--e-4) + var(--e-1));
     margin: 0;
     padding: 0;
     font-size: var(--t-sm);
   }
 
+  /* PESO 600, no 500.
+
+     Ojo con esto: la fuente del sitio resuelve a Segoe UI en Windows, y
+     Segoe UI NO tiene peso 500. Por las reglas de emparejamiento de CSS
+     un `font-weight: 500` cae a Regular y no se ve ningun cambio. Esta
+     medido: "Herramientas" a 14px mide 81px de tinta tanto a 400 como a
+     500, y 84px a 550 y a 600. Los pesos que existen de verdad son
+     300 / 350 / 400 / 600 / 700, asi que el unico escalon real hacia
+     arriba desde Regular es Semibold.
+
+     Va en 600 para que el menu le haga contrapeso optico al logo. El
+     logo son 26px de caja entintada entera; el texto a 14px tiene mucho
+     aire interno y las mayusculas miden ~10px, asi que a peso normal el
+     header quedaba cargado a la izquierda. El peso es lo que arregla eso:
+     el color se dejo como estaba a proposito, ver abajo. */
   .encabezado__enlace {
     color: var(--texto-suave);
+    font-weight: 600;
     text-decoration: none;
   }
 
@@ -103,8 +152,19 @@ function esActivo(href: string): boolean {
     color: var(--texto);
   }
 
+  /* El activo se distingue por DOS señales, peso y color, y las dos
+     tienen que sobrevivir a cualquier cambio del estado de reposo.
+
+     Por eso el reposo se quedo en --texto-suave. Subirlo a --texto-medio
+     equilibraba un poco mas el header, pero achicaba la separacion de
+     color contra el activo de 2.36:1 a 1.72:1 en claro y de 2.08:1 a
+     1.48:1 en oscuro — medido, no estimado. El activo dejaba de saltar a
+     la vista. El peso ya resuelve el equilibrio sin ese costo.
+
+     700 y no 550: 550 ya renderizaba como Semibold (600), asi que con el
+     reposo en 600 habrian quedado identicos. */
   .encabezado__enlace.es-activo {
     color: var(--texto);
-    font-weight: 550;
+    font-weight: 700;
   }
 </style>

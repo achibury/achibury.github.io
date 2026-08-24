@@ -51,9 +51,15 @@ const urlImagenOG = new URL('/og.png', Astro.site);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    {/* Monograma BA en public/favicon.svg. Se sirve solo el SVG: un
-         .ico aparte seria otro archivo que mantener sincronizado, y todos
-         los navegadores en uso soportan favicons en SVG. */}
+    {/* Monograma BA. public/favicon.svg lo GENERA
+         `node scripts/generar-logo.mjs` desde src/lib/logo.ts, la misma
+         fuente que el logo del header, asi que no se pueden
+         desincronizar. Es la version con envase cuadrado redondeado, que
+         a 16px deja 16% mas de alto de letra que el circulo.
+
+         Se sirve solo el SVG: un .ico aparte seria otro archivo que
+         mantener sincronizado, y todos los navegadores en uso soportan
+         favicons en SVG. */}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
 
