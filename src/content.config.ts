@@ -48,9 +48,26 @@ const labs = defineCollection({
     // OPCIONAL. Funciones del NIST CSF 2.0 que cubre el lab.
     funcion: z.array(z.enum(FUNCIONES)).optional(),
 
+    // OPCIONAL. Fecha de la ultima edicion de fondo del lab.
+    //
+    // No es para correcciones de tipeo: es para cuando el contenido
+    // cambia de verdad (se agrega un hallazgo, se corrige una conclusion,
+    // se rehace una prueba). Si esta, se emite como `dateModified` en los
+    // datos estructurados; si no esta, la propiedad no aparece.
+    //
+    // Se escribe igual que `fecha`: actualizado: 2026-09-01
+    actualizado: z.coerce.date().optional(),
+
     // Si es true, el lab existe en el repo pero NO se publica en el sitio.
     borrador: z.boolean().default(false),
-  }),
+  })
+    // Un `dateModified` anterior al `datePublished` no tiene sentido y los
+    // buscadores lo tratan como dato sucio. Mejor que falle el build con
+    // un mensaje claro que publicarlo.
+    .refine((d) => !d.actualizado || d.actualizado >= d.fecha, {
+      message: '`actualizado` no puede ser anterior a `fecha`.',
+      path: ['actualizado'],
+    }),
 });
 
 export const collections = { labs };

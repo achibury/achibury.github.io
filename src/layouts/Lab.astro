@@ -13,17 +13,76 @@
 import Base from './Base.astro';
 import type { Lab } from '../lib/labs';
 import { ETIQUETAS_CATEGORIA, ETIQUETAS_FUNCION, formatearFecha } from '../lib/labs';
+import { AUTOR } from '../lib/sitio';
 
 interface Props {
   lab: Lab;
 }
 
 const { lab } = Astro.props;
-const { titulo, resumen, fecha, categoria, herramientas, mitre_attack, funcion, borrador } =
-  lab.data;
+const {
+  titulo,
+  resumen,
+  fecha,
+  actualizado,
+  categoria,
+  herramientas,
+  mitre_attack,
+  funcion,
+  borrador,
+} = lab.data;
+
+/**
+ * Datos estructurados del lab (schema.org TechArticle).
+ *
+ * TechArticle es el subtipo para contenido técnico, más preciso que
+ * Article a secas. Todo sale del frontmatter y de `Astro.site`: no hay
+ * ningún valor escrito a mano acá.
+ *
+ * Las URLs son absolutas porque los buscadores leen el JSON-LD fuera del
+ * contexto de la página y una ruta relativa no significa nada ahí. Se
+ * arman igual que el canonical de Base.astro, con `Astro.site`.
+ *
+ * `datePublished` va como fecha sola (2026-03-14) y no con hora: el
+ * frontmatter solo trae la fecha, y un `toISOString()` completo
+ * afirmaría una hora y una zona que nadie escribió.
+ *
+ * `dateModified` sale del campo opcional `actualizado` y SOLO aparece si
+ * el lab lo declara. No se rellena con la fecha del build: eso afirmaría
+ * que el lab se modificó cada vez que se compila el sitio.
+ */
+const urlLab = new URL(Astro.url.pathname, Astro.site);
+const datosEstructurados = {
+  '@context': 'https://schema.org',
+  '@type': 'TechArticle',
+  headline: titulo,
+  description: resumen,
+  datePublished: fecha.toISOString().slice(0, 10),
+  // Solo si el lab declara `actualizado` en el frontmatter.
+  ...(actualizado ? { dateModified: actualizado.toISOString().slice(0, 10) } : {}),
+  inLanguage: 'es',
+  url: urlLab.href,
+  mainEntityOfPage: { '@type': 'WebPage', '@id': urlLab.href },
+  image: new URL('/og.png', Astro.site).href,
+  author: {
+    '@type': 'Person',
+    name: AUTOR,
+    url: new URL('/sobre-mi/', Astro.site).href,
+  },
+  // Solo si el lab declara herramientas: un keywords vacío no aporta.
+  ...(herramientas.length > 0 ? { keywords: herramientas.join(', ') } : {}),
+};
 ---
 
-<Base titulo={titulo} descripcion={resumen}>
+{/* En producción los borradores no generan página, pero en
+    `npm run dev` sí se muestran: el guardado evita emitir datos
+    estructurados de algo que no está publicado. */}
+<Base
+  titulo={titulo}
+  descripcion={resumen}
+  tipoOG="article"
+  datosEstructurados={borrador ? undefined : datosEstructurados}
+>
   <article class="contenedor">
     <header class="cabecera">
       {

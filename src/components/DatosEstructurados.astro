@@ -1,0 +1,27 @@
+---
+/**
+ * Emite un bloque JSON-LD (schema.org) en el <head>.
+ *
+ * Es datos, no codigo: el navegador no ejecuta nada de lo que hay dentro
+ * de un `type="application/ld+json"`. No agrega JavaScript al cliente ni
+ * una peticion extra, va incrustado en el HTML.
+ *
+ * Recibe el objeto ya armado y se ocupa solo de serializarlo bien.
+ */
+interface Props {
+  datos: Record<string, unknown>;
+}
+
+const { datos } = Astro.props;
+
+/**
+ * `JSON.stringify` NO escapa el signo menor que, asi que un texto del
+ * frontmatter que contuviera la secuencia de cierre de un script
+ * cerraria el bloque antes de tiempo y volcaria el resto como HTML.
+ * Escaparlo como \u003c es la defensa estandar y no cambia el valor:
+ * al parsear vuelve a ser el mismo caracter.
+ */
+const json = JSON.stringify(datos).replace(/</g, '\\u003c');
+---
+
+<script type="application/ld+json" is:inline set:html={json} />

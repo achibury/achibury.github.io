@@ -29,7 +29,10 @@ const SUAVE = '#94a3b8'; // --texto-suave
 const ACENTO = '#5eead4'; // --acento
 
 const NOMBRE = 'Benjamin Achibury';
-const LINEA = 'Portafolio de ciberseguridad defensiva';
+// Este texto es SOLO el de la imagen. La og:description de Base.astro es
+// otra cosa y sigue diciendo "defensiva" a proposito, para posicionar por
+// ese termino. Cambiar uno no toca al otro.
+const LINEA = 'Portafolio de Ciberseguridad';
 const SITIO = 'achibury.github.io';
 
 const FUENTE = "'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif";
@@ -45,21 +48,52 @@ const marca = `<g transform="translate(978 74)">
     </g>
   </g>`;
 
+/**
+ * Posicion vertical. Son DOS grupos con reglas distintas, no un bloque:
+ *
+ *   - El bloque principal (regla + nombre + linea) va CENTRADO.
+ *   - La URL va anclada ABAJO como pie.
+ *
+ * Antes las cuatro piezas tenian su `y` absoluto escrito a mano y el
+ * conjunto habia quedado 79px por debajo del centro (238 de margen
+ * arriba contra 78 abajo). Al centrarlo todo junto, la URL subio con el
+ * resto y dejo un tercio inferior vacio, flotando en medio de la nada.
+ * De ahi la separacion en dos grupos.
+ *
+ * Los numeros salen de medir la tinta sobre el PNG, no de estimar:
+ * el bloque principal mide 194px de alto real, y la URL baja 6px por
+ * debajo de su linea de base (la 'y' y la 'g' de "achibury.github.io").
+ */
+const ALTO_PRINCIPAL = 194; // medido: de lo alto de la regla a lo bajo de la linea
+const DESC_URL = 6; // cuanto baja la URL de su linea de base
+const MARGEN_PIE = 90; // igual al margen izquierdo, para que el marco cierre
+
+const bloqueY = Math.round((630 - ALTO_PRINCIPAL) / 2);
+
+// Desplazamientos dentro del bloque principal, tomados del diseno
+// original para conservar el ritmo entre las tres piezas.
+const yRegla = bloqueY;
+const yNombre = bloqueY + 120;
+const yLinea = bloqueY + 186;
+
+// El pie se mide desde abajo, no desde el bloque.
+const ySitio = 630 - MARGEN_PIE - DESC_URL;
+
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
   <rect width="1200" height="630" fill="${FONDO}"/>
 
   ${marca}
 
   <!-- unico adorno: una regla corta de acento sobre el nombre -->
-  <rect x="90" y="238" width="88" height="4" rx="2" fill="${ACENTO}"/>
+  <rect x="90" y="${yRegla}" width="88" height="4" rx="2" fill="${ACENTO}"/>
 
-  <text x="90" y="358" font-family="${FUENTE}" font-size="74" font-weight="700"
+  <text x="90" y="${yNombre}" font-family="${FUENTE}" font-size="74" font-weight="700"
         letter-spacing="-1.5" fill="${TEXTO}">${NOMBRE}</text>
 
-  <text x="90" y="424" font-family="${FUENTE}" font-size="32" font-weight="400"
+  <text x="90" y="${yLinea}" font-family="${FUENTE}" font-size="32" font-weight="400"
         fill="${SUAVE}">${LINEA}</text>
 
-  <text x="90" y="546" font-family="${FUENTE}" font-size="24" font-weight="500"
+  <text x="90" y="${ySitio}" font-family="${FUENTE}" font-size="24" font-weight="500"
         fill="${ACENTO}">${SITIO}</text>
 </svg>`;
 

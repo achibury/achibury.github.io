@@ -10,16 +10,33 @@
  * propio de cada página.
  */
 import Header from '../components/Header.astro';
+import DatosEstructurados from '../components/DatosEstructurados.astro';
+import { AUTOR } from '../lib/sitio';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 
 interface Props {
   titulo: string;
   descripcion?: string;
+  /**
+   * Valor de og:type. Por defecto 'website', que es lo correcto para el
+   * home, los listados y las páginas fijas. Las páginas de lab pasan
+   * 'article' porque son contenido fechado y con autor, y las redes las
+   * tratan distinto.
+   */
+  tipoOG?: 'website' | 'article';
+  /**
+   * Objeto JSON-LD (schema.org) para esta página, si corresponde. Lo
+   * arma quien conoce los datos —Lab.astro con el frontmatter del lab,
+   * sobre-mi.astro con el perfil— y acá solo se emite en el <head>.
+   * Las páginas que no lo pasan no generan el bloque.
+   */
+  datosEstructurados?: Record<string, unknown>;
 }
 
-const { titulo, descripcion } = Astro.props;
-const tituloCompleto = `${titulo} · Benjamin Achibury`;
+const { titulo, descripcion, tipoOG = 'website', datosEstructurados } = Astro.props;
+
+const tituloCompleto = `${titulo} · ${AUTOR}`;
 
 /**
  * URL absoluta de ESTA página.
@@ -65,6 +82,7 @@ const urlImagenOG = new URL('/og.png', Astro.site);
 
     <title>{tituloCompleto}</title>
     {descripcion && <meta name="description" content={descripcion} />}
+    <meta name="author" content={AUTOR} />
 
     {/* La dirección "oficial" de esta página. Le dice a los buscadores
         cuál es la versión buena si llegan por una URL con parámetros o
@@ -82,18 +100,24 @@ const urlImagenOG = new URL('/og.png', Astro.site);
         Podría generarse una por lab con el título dibujado encima, pero
         eso pide una dependencia de dibujo y una ruta que la sirva; para
         un portafolio de este tamaño no compensa. */}
-    <meta property="og:type" content="website" />
+    {/* website en las páginas normales, article en las de lab. Lo pasa
+        Lab.astro; el resto usa el valor por defecto. */}
+    <meta property="og:type" content={tipoOG} />
     <meta property="og:url" content={urlCanonica} />
     <meta property="og:title" content={tituloCompleto} />
     {descripcion && <meta property="og:description" content={descripcion} />}
     <meta property="og:locale" content="es_CL" />
-    <meta property="og:site_name" content="Benjamin Achibury" />
+    <meta property="og:site_name" content={AUTOR} />
     <meta property="og:image" content={urlImagenOG} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="Benjamin Achibury — Portafolio de ciberseguridad defensiva"
+      {/* Sigue al texto del PNG, que dice "Portafolio de Ciberseguridad".
+          El alt describe la imagen, asi que tiene que decir lo que la
+          imagen dice. Ojo: la og:description es otra cosa y SI lleva
+          "defensiva" a proposito, para posicionar por ese termino. */}
+      content={`${AUTOR} — Portafolio de Ciberseguridad`}
     />
 
     {/* Twitter/X usa su propio juego de etiquetas. `summary_large_image`
@@ -103,6 +127,12 @@ const urlImagenOG = new URL('/og.png', Astro.site);
     <meta name="twitter:title" content={tituloCompleto} />
     {descripcion && <meta name="twitter:description" content={descripcion} />}
     <meta name="twitter:image" content={urlImagenOG} />
+
+    {/* Datos estructurados. Son datos inertes, no código: el navegador
+        no ejecuta nada de lo que hay dentro de un ld+json, así que no
+        agregan JavaScript al cliente. Sirven para que el buscador tenga
+        el autor y la fecha de forma explícita en vez de adivinarlos. */}
+    {datosEstructurados && <DatosEstructurados datos={datosEstructurados} />}
 
   </head>
 

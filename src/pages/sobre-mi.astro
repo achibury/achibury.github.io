@@ -12,6 +12,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import Base from '../layouts/Base.astro';
+import { AUTOR, PERFILES } from '../lib/sitio';
 
 /**
  * ¿Existe public/cv.pdf?
@@ -41,11 +42,47 @@ const hayCV = existsSync(path.join(process.cwd(), 'public', 'cv.pdf'));
  *   4. `npm run build`.
  */
 const hayCertificaciones = false;
+
+/**
+ * Datos estructurados del perfil (schema.org Person).
+ *
+ * Es lo que ayuda a que el buscador asocie el nombre con este sitio.
+ * Solo lleva lo que el sitio ya publica: `PERFILES` sale de
+ * src/lib/sitio.ts y es la misma constante que usa el enlace de la
+ * sección de contacto, así que no pueden quedar desincronizados.
+ *
+ * Lo que NO lleva, a propósito:
+ *
+ *   - `email`. La página parte el correo en dos con un <span> justamente
+ *     para que no lo barran los recolectores (ver "NO TOCAR" punto 5 en
+ *     CLAUDE.md). Publicarlo en un JSON-LD lo entregaría entero y en
+ *     texto plano, anulando toda esa protección.
+ *   - `jobTitle` y `description`. Los párrafos de presentación siguen
+ *     siendo texto de relleno marcado con REEMPLAZAR, así que no hay de
+ *     dónde sacarlos sin inventarlos.
+ *   - `image`. No hay foto en el repositorio.
+ */
+const datosEstructurados = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: AUTOR,
+  url: new URL('/', Astro.site).href,
+  sameAs: PERFILES,
+  // `addressCountry` no es propiedad directa de Person: va dentro de un
+  // PostalAddress. Solo el pais, que es el dato que hay y el que
+  // interesa; no hay ciudad ni direccion publicada en el sitio.
+  address: { '@type': 'PostalAddress', addressCountry: 'CL' },
+  mainEntityOfPage: {
+    '@type': 'WebPage',
+    '@id': new URL(Astro.url.pathname, Astro.site).href,
+  },
+};
 ---
 
 <Base
   titulo="Sobre mí"
   descripcion="Perfil profesional, formación y contacto de Benjamin Achibury."
+  datosEstructurados={datosEstructurados}
 >
   <div class="contenedor contenedor--centrado">
     <section class="seccion">
@@ -194,7 +231,7 @@ const hayCertificaciones = false;
           <span class="lista-contacto__clave">LinkedIn</span>
           <a
             class="correo"
-            href="https://www.linkedin.com/in/benjamin-achibury/"
+            href={PERFILES[0]}
             target="_blank"
             rel="noopener noreferrer"
           >linkedin.com/in/benjamin-achibury</a>

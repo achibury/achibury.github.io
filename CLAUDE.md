@@ -271,6 +271,7 @@ con un mensaje claro; es a propósito, es la red de seguridad.
 | `herramientas` | string[] | validado contra `taxonomia.ts`, por defecto `[]` |
 | `mitre_attack` | string[] | **opcional** |
 | `funcion` | enum[] | **opcional**, NIST CSF 2.0 |
+| `actualizado` | date | **opcional**, se emite como `dateModified` |
 | `borrador` | boolean | por defecto `false` |
 
 **Categorías** (las seis, no inventar otras):
@@ -292,6 +293,20 @@ y le quita valor al que sí corresponde. Si no se declara, la fila no aparece.
 El marco tiene seis; falta *gobernar* (GOVERN) **a propósito**, porque es una
 función de gobernanza organizacional y no algo que se demuestre en un
 laboratorio técnico. No la agregues "porque falta".
+
+**`actualizado` es para ediciones de fondo, no para tipeos.** Se pone
+cuando el contenido cambia de verdad: se agrega un hallazgo, se corrige
+una conclusión, se rehace una prueba. Si está, sale como `dateModified`
+en los datos estructurados; si no está, esa propiedad **no aparece** —
+no se rellena con la fecha del build, porque eso afirmaría que el lab se
+modificó en cada compilación.
+
+El schema tiene una guarda: **si `actualizado` es anterior a `fecha`, el
+build falla** nombrando el campo. Un `dateModified` previo al
+`datePublished` no tiene sentido y los buscadores lo tratan como dato
+sucio. Es la única regla del schema que compara dos campos entre sí, y
+por eso es la única que usa `.refine()` sobre el objeto en vez de validar
+un campo suelto.
 
 ### Taxonomía (`src/content/taxonomia.ts`)
 
@@ -853,6 +868,52 @@ del sitio.
 **Si algún día vuelve el `noindex`**, hay que tocar las tres piezas, no
 solo el meta: un sitemap que anuncia URLs mientras el HTML pide no
 indexarlas es una contradicción que los buscadores resuelven mal.
+
+### Datos estructurados (JSON-LD)
+
+Dos bloques `application/ld+json`, y solo dos:
+
+| Página | `@type` | De dónde salen los datos |
+| --- | --- | --- |
+| Cada lab publicado | `TechArticle` | el frontmatter del lab |
+| `/sobre-mi` | `Person` | `src/lib/sitio.ts` |
+
+Las piezas: `src/lib/sitio.ts` (constantes `AUTOR` y `PERFILES`),
+`src/components/DatosEstructurados.astro` (serializa y emite) y la prop
+`datosEstructurados` de `Base.astro`, que lo pone en el `<head>`. Quien
+conoce los datos arma el objeto; el componente solo lo escribe.
+
+**No agrega JavaScript al cliente.** Un `type="application/ld+json"` es
+datos inertes: el navegador no ejecuta nada de lo que hay dentro.
+
+**Expectativa realista:** esto **no** sube el ranking. Hace que las
+páginas sean elegibles para que el buscador muestre fecha y autor, y le
+da esos datos explícitos en vez de que los adivine.
+
+Cuatro cosas que no son obvias:
+
+- **El correo NO va nunca en el JSON-LD.** La página de contacto parte la
+  dirección en dos con un `<span>` justamente para que no la barran los
+  recolectores (ver "NO TOCAR" punto 5). Ponerla en un JSON-LD la
+  entregaría entera y en texto plano, anulando esa protección completa.
+  El `Person` queda más delgado por eso, y está bien así.
+- **Los borradores no emiten nada.** En producción no generan página, pero
+  en `npm run dev` sí se muestran, así que `Lab.astro` pasa `undefined`
+  cuando `borrador` es `true`.
+- **Las URLs son absolutas**, armadas con `Astro.site` igual que el
+  canonical. Los buscadores leen el JSON-LD fuera del contexto de la
+  página y una ruta relativa no significa nada ahí.
+- **El componente escapa el signo menor que** como `\u003c`.
+  `JSON.stringify` no lo escapa, y un texto del frontmatter que
+  contuviera la secuencia de cierre de un script cerraría el bloque antes
+  de tiempo y volcaría el resto como HTML.
+
+Campos que **faltan por falta de dato**, no por olvido: el `Person` no
+lleva `jobTitle` ni `description` porque los párrafos de presentación
+siguen siendo relleno marcado `REEMPLAZAR`, ni `image` porque no hay foto
+en el repo. Y el `image` del `TechArticle` es el `og.png` genérico del
+sitio, no una imagen del lab: es honesto (es la imagen social de esa
+página) pero no ilustra el contenido.
 
 **"Enforce HTTPS" está activado** en Settings → Pages del repositorio
 (confirmado). GitHub Pages no deja configurar cabeceras HTTP, así que esa
