@@ -237,49 +237,247 @@ const datosEstructurados = {
     <section class="seccion">
       <h2 class="titulo-seccion">Contacto</h2>
 
-      {/* El correo NO se publica como enlace mailto:, que es exactamente
-          lo que rastrean los recolectores de spam. Va como texto, partido
-          en dos por un <span> y con la arroba escrita como entidad HTML
-          (&#64;), así que la dirección completa no aparece como una sola
-          cadena en el código fuente de la página.
+      {/* LA DIRECCIÓN NO ESTÁ ACÁ, Y ESO ES EL PUNTO.
 
-          El script que está debajo de la lista lo convierte en un enlace
-          mailto: funcional al cargar. Si el JavaScript no corre, el correo
-          se sigue viendo y se puede copiar: solo deja de ser clickeable. */}
-      <ul class="lista-contacto">
-        <li>
-          <span class="lista-contacto__clave">Correo</span>
-          <span class="correo" data-correo>benjamin.achibury<span>&#64;</span>protonmail.com</span>
-        </li>
-        <li>
-          <span class="lista-contacto__clave">LinkedIn</span>
-          <a
-            class="correo"
-            href={PERFILES[0]}
-            target="_blank"
-            rel="noopener noreferrer"
-          >linkedin.com/in/benjamin-achibury</a>
-        </li>
-      </ul>
+          Antes el correo se mostraba en pantalla, partido en el HTML con
+          un <span> y con la arroba como &#64;. Eso frena al recolector
+          que aplica una expresión regular sobre el código fuente, pero
+          NO al que renderiza la página y lee el texto: para ese, la
+          dirección estaba a la vista como cualquier otro párrafo.
+
+          Ahora el botón dice "Correo" y nada más. Las dos mitades viajan
+          en `data-usuario` y `data-dominio`, nunca juntas, y el script
+          las une para armar el mailto:. Así la dirección no aparece ni en
+          el HTML servido ni en el texto visible.
+
+          Alcance real, para no venderlo de más: una vez que el script
+          corrió, el mailto: sí queda en el DOM, así que un recolector que
+          ejecute JavaScript y lea el DOM la obtiene igual. Lo que se cerró
+          es la vía del texto renderizado, que antes estaba abierta.
+
+          El <noscript> de más abajo es la salida cuando el script no
+          corre; ver el comentario que lo acompaña. */}
+      <div class="contacto">
+        {/* CONTROL DIVIDIDO: dos zonas, DOS CONTROLES.
+
+            El <a> y el <button> van uno al lado del otro, nunca anidados:
+            un elemento interactivo no puede contener otro, y el navegador
+            que se encuentra con eso reacomoda el árbol por su cuenta y de
+            forma distinta en cada motor.
+
+            Las dos mitades de la dirección viven acá, en el contenedor, y
+            no en uno de los dos botones: las necesitan los dos (el mailto:
+            y el copiado), y tener una sola copia evita que se
+            desincronicen. */}
+        <div
+          class="contacto__dividido"
+          data-usuario="benjamin.achibury"
+          data-dominio="protonmail.com"
+        >
+        <span class="contacto__boton" data-correo>
+          <svg
+            class="contacto__icono"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            aria-hidden="true"
+          >
+            <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" />
+            <path d="m3.5 6.5 8.5 6.5 8.5-6.5" />
+          </svg>
+          <span>Correo</span>
+        </span>
+
+          {/* Sin etiqueta a propósito: va pegado al botón de correo y el
+              contexto dice qué copia. Por eso lleva `aria-label` explícito
+              (es su único nombre accesible) y `title`, que es el globo
+              nativo del navegador y la señal que compensa la falta de
+              palabra en escritorio.
+
+              Nace con `hidden` y lo destapa el script: sin JavaScript no
+              podría copiar nada, y un control muerto es peor que ninguno. */}
+          <button
+            type="button"
+            class="contacto__copiar"
+            data-copiar
+            aria-label="Copiar dirección de correo"
+            title="Copiar dirección de correo"
+            hidden
+          >
+            <svg
+              class="contacto__icono"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              aria-hidden="true"
+            >
+              <rect x="9" y="9" width="12" height="12" rx="2" />
+              <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+            </svg>
+            {/* Confirmación para quien ve la pantalla. Como el botón no
+                tiene etiqueta, sin esto un clic no produce ninguna señal
+                visible y parece que no pasó nada. Va como clase propia y
+                no como otro `.contacto__icono` para que la regla que lo
+                muestra gane por especificidad y no por orden. */}
+            <svg
+              class="contacto__tilde"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+              aria-hidden="true"
+            >
+              <path d="m4 12.5 5 5 11-11" />
+            </svg>
+          </button>
+        </div>
+
+        <a
+          class="contacto__boton"
+          href={PERFILES[0]}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Perfil de Benjamin Achibury en LinkedIn"
+        >
+          <svg class="contacto__icono" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13Zm1.78 13.02H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"
+            />
+          </svg>
+          <span>LinkedIn</span>
+        </a>
+      </div>
+
+      {/* Anuncia el resultado del copiado a quien use lector de pantalla.
+
+          Va escrita en el HTML y NO la crea el script: una región
+          `aria-live` tiene que existir en el documento ANTES de que se le
+          meta texto. Si se crea y se rellena en el mismo instante, varios
+          lectores no la anuncian porque nunca la vieron vacía. */}
+      <p class="visualmente-oculto" aria-live="polite" data-copiar-aviso></p>
+
+      {/* Sin JavaScript el botón de correo no se arma y quedaría sin
+          salida, así que acá va la dirección de respaldo.
+
+          El navegador solo dibuja el contenido de un <noscript> cuando el
+          scripting está apagado, o sea que esto NO se ve en una visita
+          normal. Y como el recolector que renderiza sí ejecuta
+          JavaScript, tampoco lo ve él. Al que lee el HTML crudo le queda
+          la misma cadena partida que había antes: no se pierde nada
+          respecto de la versión anterior, y solo en este camino. */}
+      <noscript>
+        <p class="contacto__respaldo">
+          El botón de correo se arma con JavaScript. Si lo tienes
+          desactivado, escríbeme a <span class="contacto__respaldo-dato"
+            >benjamin.achibury<span>&#64;</span>protonmail.com</span
+          >.
+        </p>
+      </noscript>
 
       {/* Arma el enlace mailto: en el navegador.
 
           `is:inline` le pide a Astro que lo deje tal cual dentro del HTML
-          en vez de empaquetarlo en un .js aparte: son siete líneas y no
-          vale la pena una peticion extra por ellas.
+          en vez de empaquetarlo en un .js aparte.
 
-          Va DESPUÉS del <ul>, o sea que cuando corre el elemento ya existe
-          y no hace falta esperar ningún evento de carga. */}
+          Va DESPUÉS del marcado, o sea que cuando corre el elemento ya
+          existe y no hace falta esperar ningún evento de carga.
+
+          COPIA LOS ATRIBUTOS, no solo la clase. Astro compila los estilos
+          de esta página con ámbito: la regla que sale del <style> de abajo
+          no es `.contacto__boton` sino `.contacto__boton[data-astro-cid-…]`.
+          Un elemento creado con createElement no trae ese atributo, así
+          que copiando solo className el botón nuevo se quedaría sin
+          NINGUNO de sus estilos. Las dos mitades de la dirección se
+          excluyen a mano: no tienen para qué volver al DOM. */}
       <script is:inline>
-        document.querySelectorAll('[data-correo]').forEach(function (elemento) {
-          var direccion = elemento.textContent.replace(/\s+/g, '');
-          if (!direccion) return;
-          var enlace = document.createElement('a');
-          enlace.href = 'mailto:' + direccion;
-          enlace.textContent = direccion;
-          enlace.className = elemento.className;
-          elemento.replaceWith(enlace);
-        });
+        (function () {
+          var caja = document.querySelector('[data-usuario][data-dominio]');
+          if (!caja) return;
+
+          var usuario = caja.getAttribute('data-usuario');
+          var dominio = caja.getAttribute('data-dominio');
+          if (!usuario || !dominio) return;
+          var direccion = usuario + '@' + dominio;
+
+          /* --- 1. El <span> del correo pasa a ser un <a> con mailto: ---
+
+             COPIA LOS ATRIBUTOS, no solo la clase. Astro compila los
+             estilos de esta página con ámbito: la regla real no es
+             `.contacto__boton` sino `.contacto__boton[data-astro-cid-…]`.
+             Un elemento creado con createElement no trae ese atributo, así
+             que copiando solo className el botón se quedaría sin ninguno
+             de sus estilos. */
+          document.querySelectorAll('[data-correo]').forEach(function (elemento) {
+            var enlace = document.createElement('a');
+            Array.prototype.forEach.call(elemento.attributes, function (atributo) {
+              if (atributo.name.indexOf('data-correo') !== 0) {
+                enlace.setAttribute(atributo.name, atributo.value);
+              }
+            });
+            enlace.href = 'mailto:' + direccion;
+            enlace.setAttribute('aria-label', 'Escribir un correo a Benjamin Achibury');
+            while (elemento.firstChild) enlace.appendChild(elemento.firstChild);
+            elemento.replaceWith(enlace);
+          });
+
+          /* --- 2. El segmento de copiar --- */
+          var boton = document.querySelector('[data-copiar]');
+          var aviso = document.querySelector('[data-copiar-aviso]');
+          if (boton) {
+            boton.hidden = false;
+
+            var reloj;
+            function anunciar(texto) {
+              if (!aviso) return;
+              clearTimeout(reloj);
+              aviso.textContent = texto;
+              reloj = setTimeout(function () {
+                aviso.textContent = '';
+              }, 3000);
+            }
+
+            boton.addEventListener('click', function () {
+              /* Marca visual de que pasó algo: el icono se cambia por un
+                 tilde y vuelve solo. El anuncio para lector de pantalla va
+                 por la región aria-live, no por el título del botón, para
+                 no reescribirle el nombre accesible mientras lo usa. */
+              function confirmar() {
+                boton.setAttribute('data-copiado', 'si');
+                anunciar('Dirección de correo copiada');
+                setTimeout(function () {
+                  boton.removeAttribute('data-copiado');
+                }, 2200);
+              }
+
+              /* Si el portapapeles no está disponible o lo bloquean, la
+                 mostramos para copiarla a mano. Solo pasa después de un
+                 clic, o sea que la pide la persona; no queda expuesta. */
+              function aMano() {
+                anunciar('No se pudo copiar. La dirección quedó a la vista.');
+                if (document.querySelector('.contacto__revelado')) return;
+                var caja2 = document.createElement('code');
+                caja2.className = 'contacto__revelado';
+                caja2.textContent = direccion;
+                var grupo = boton.closest('.contacto');
+                if (grupo) grupo.insertAdjacentElement('afterend', caja2);
+              }
+
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(direccion).then(confirmar, aMano);
+              } else {
+                aMano();
+              }
+            });
+          }
+
+          /* Las dos mitades ya no hacen falta en el DOM. Sacarlas no es una
+             ganancia real —el mailto: del <a> ya lleva la dirección entera—
+             pero no hay motivo para dejar dos copias dando vueltas. */
+          caja.removeAttribute('data-usuario');
+          caja.removeAttribute('data-dominio');
+        })();
       </script>
     </section>
   </div>
@@ -347,32 +545,302 @@ const datosEstructurados = {
     margin-block: var(--e-2);
   }
 
-  /* Contacto: la etiqueta ("Correo") en una columna fija y el dato al
-     lado, para que las filas queden alineadas entre sí. */
-  .lista-contacto {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .lista-contacto li {
+  /* Contacto: dos botones del mismo ancho, en fila mientras quepan y
+     apilados cuando no. */
+  .contacto {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--e-2) var(--e-4);
-    padding-block: var(--e-3);
-    border-top: 1px solid var(--borde);
+    gap: var(--e-4);
+    /* Sin tope se estirarian hasta los 70ch de la medida de lectura, o
+       sea ~300px de boton para la palabra "Correo". Con 460 quedan en
+       222 cada uno: presencia sin exageracion. */
+    max-width: 460px;
   }
 
-  /* La direccion de correo es larga y no tiene espacios: sin esto
-     desborda el contenedor en pantallas de 360px. */
-  .correo {
+  .contacto__boton {
+    position: relative;
+    /* Recorta el barrido a las esquinas redondeadas. No afecta al anillo
+       de foco: overflow recorta descendientes, no el outline propio. */
+    overflow: hidden;
+    /* La base de 200px es lo que hace que se apilen solos a 360px: dos de
+       200 mas el hueco no entran en los 312px utiles, asi que el
+       flex-wrap los baja sin necesidad de una media query. */
+    flex: 1 1 200px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--e-2);
+    /* 48px, por encima de los 44 que piden las guias de area de toque. */
+    min-height: 48px;
+    padding: var(--e-3) var(--e-4);
+    border: 1px solid var(--texto-suave);
+    border-radius: var(--radio);
+    background: var(--superficie);
+    color: var(--texto);
+    font-size: var(--t-sm);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.28s ease, border-color 0.28s ease;
+  }
+
+  /* El barrido de acento.
+
+     Va en un ::before y no en el background del boton porque lo que se
+     anima es una transformacion: el navegador la resuelve sin rehacer la
+     disposicion de la pagina. Animar el ancho o el color de fondo si lo
+     obligaria. */
+  .contacto__boton::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--acento-fondo);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Sin esto el ::before taparia el texto y el icono: se pinta despues
+     que el fondo del boton pero antes que su contenido solo si el
+     contenido tambien esta posicionado. */
+  .contacto__boton > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---------- Control dividido: correo + copiar ----------
+
+     El marco, el fondo y el redondeo los pone el CONTENEDOR; las dos
+     zonas de adentro van sin borde. Asi el conjunto mide exactamente lo
+     mismo que el boton de LinkedIn de al lado y el par sigue leyendose
+     como un par. */
+  .contacto__dividido {
+    flex: 1 1 200px;
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--texto-suave);
+    border-radius: var(--radio);
+    background: var(--superficie);
+    overflow: hidden;
+  }
+
+  /* Senal de grupo: el marco entero se tine cuando el foco cae en
+     cualquiera de las dos zonas. Cual de las dos es, lo dice el anillo
+     interior de mas abajo. */
+  .contacto__dividido:focus-within {
+    border-color: var(--acento);
+  }
+
+  .contacto__dividido .contacto__boton {
+    flex: 1 1 auto;
+    /* Sin esto, un contenido largo no deja encoger la zona por debajo de
+       su ancho minimo y empuja al segmento fuera del marco. */
+    min-width: 0;
+    border: 0;
+    /* El radio interior es el del marco menos su borde. Que lo tenga NO
+       es estetica: el anillo de foco sigue el border-radius del elemento,
+       y con esquinas rectas el overflow del contenedor le recorta las
+       puntas. */
+    border-radius: calc(var(--radio) - 1px) 0 0 calc(var(--radio) - 1px);
+    background: transparent;
+  }
+
+  /* EL SEGMENTO DE COPIAR
+
+     48px de ancho y 48 de alto: cuadrado, y por encima de los 44 minimos
+     de area de toque en los dos ejes. Es angosto y esta pegado a un
+     enlace grande, asi que el margen sobre el minimo no es de adorno.
+
+     Poner el relleno en cero es necesario: el navegador le da relleno
+     propio a todo <button>, y con ese relleno heredado el icono no queda
+     centrado dentro de su zona. */
+  .contacto__copiar {
+    flex: 0 0 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    /* EL DIVISOR. Es lo que hace que se lean como dos controles y no como
+       uno: 7.24:1 contra la superficie en claro y 5.71:1 en oscuro, muy
+       por encima del minimo de 3:1. Sobre el tinte del hover baja a
+       7.03:1 y 3.70:1, que sigue pasando. */
+    border-left: 1px solid var(--texto-suave);
+    border-radius: 0 calc(var(--radio) - 1px) calc(var(--radio) - 1px) 0;
+    background: transparent;
+    color: var(--acento);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.28s ease;
+  }
+
+  /* Cada zona tiene SU PROPIO barrido. Es lo que hace que pasar el mouse
+     por una no encienda la otra: son dos ::before independientes, no un
+     estado del contenedor. */
+  .contacto__copiar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--acento-fondo);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .contacto__copiar .contacto__icono {
+    position: relative;
+    z-index: 1;
+    width: 17px;
+    height: 17px;
+    /* Un <svg> es en linea por defecto y se sienta en la linea base, o
+       sea que arrastra el espacio del descendiente y queda un pelo alto
+       dentro de su caja. En bloque se centra de verdad. */
+    display: block;
+  }
+
+  .contacto__copiar:hover::before {
+    transform: scaleX(1);
+  }
+
+  /* --- Confirmación de copiado ---
+
+     Dura 2,2 segundos y vuelve sola; el script pone y saca
+     `data-copiado`. La confirmación para lector de pantalla NO va acá,
+     va por la región aria-live: cambiar el nombre accesible del botón
+     mientras alguien lo está usando es peor que anunciarlo aparte. */
+  .contacto__tilde {
+    display: none;
+    position: relative;
+    z-index: 1;
+    width: 17px;
+    height: 17px;
+  }
+
+  .contacto__copiar[data-copiado] .contacto__tilde {
+    display: block;
+  }
+
+  .contacto__copiar[data-copiado] .contacto__icono {
+    display: none;
+  }
+
+  .contacto__copiar[data-copiado] {
+    border-left-color: var(--acento);
+  }
+
+  .contacto__copiar[data-copiado]::before {
+    transform: scaleX(1);
+  }
+
+  .contacto__copiar:hover {
+    border-left-color: var(--acento);
+  }
+
+  /* Foco por zona: anillo INTERIOR.
+
+     El global de global.css usa outline-offset: 3px, que acá lo recortaria
+     el overflow del contenedor. Con desplazamiento negativo el anillo se
+     dibuja por dentro del borde y se ve entero. Sigue siendo un outline
+     de verdad, no una sombra, asi que sobrevive al modo de alto contraste
+     de Windows. */
+  .contacto__dividido .contacto__boton:focus-visible,
+  .contacto__copiar:focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: -2px;
+  }
+
+  /* Se ve solo si el portapapeles falla, y solo despues de un clic. */
+  .contacto__revelado {
+    display: inline-block;
+    margin-top: var(--e-3);
+    padding: var(--e-2) var(--e-3);
+    border: 1px dashed var(--acento);
+    border-radius: var(--radio);
+    background: var(--acento-fondo);
+    color: var(--texto);
+    font-size: var(--t-sm);
     overflow-wrap: anywhere;
   }
 
-  .lista-contacto__clave {
-    flex: 0 0 6rem;
+  /* Para la region aria-live: fuera de la vista pero dentro del arbol de
+     accesibilidad. No sirve display:none ni visibility:hidden, que la
+     sacan tambien de ahi y no se anunciaria nada. */
+  .visualmente-oculto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .contacto__icono {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    color: var(--acento);
+  }
+
+  /* EL HOVER NO LO LLEVA EL RELLENO.
+
+     Medido: --acento-fondo contra --superficie da 1.03:1 en claro (18, 1,
+     6 de diferencia RGB). O sea que el barrido, solo, es casi invisible
+     con el tema claro; se ve, pero no alcanza para senalar un cambio de
+     estado.
+
+     Lo que de verdad marca el hover son las otras dos senales que van
+     junto con el: el borde pasa de --texto-suave a --acento y la etiqueta
+     de --texto a --acento. Si algun dia sacas alguna de las dos buscando
+     simplificar, el hover deja de leerse en claro aunque el barrido siga
+     ahi. En oscuro el relleno si aporta (1.54:1) porque el tinte es teal
+     sobre pizarra.
+
+     Acotado al selector de elemento `a` a proposito: mientras el correo
+     es un <span>, o sea
+     si el JavaScript no corrio, NO se comporta como boton, porque no
+     hace nada. Prometer un hover que no lleva a ningun lado es peor que
+     no tenerlo. */
+  a.contacto__boton:hover {
+    border-color: var(--acento);
+    color: var(--acento);
+  }
+
+  a.contacto__boton:hover::before {
+    transform: scaleX(1);
+  }
+
+  /* HACE FALTA, no sobra. El atributo `hidden` trae display: none desde
+     la hoja del navegador, que vale (0,0,1); `.contacto__copiar` declara
+     display: inline-flex y vale (0,1,0), asi que le gana. Sin esta linea
+     el boton se ve igual mientras esta oculto, y ademas parpadea antes de
+     que el script lo destape. */
+  .contacto__copiar[hidden] {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contacto__boton,
+    .contacto__boton::before,
+    .contacto__copiar,
+    .contacto__copiar::before {
+      transition: none;
+    }
+  }
+
+  /* Solo se ve con el scripting apagado (esta dentro de un <noscript>). */
+  .contacto__respaldo {
+    margin: var(--e-4) 0 0;
     font-size: var(--t-sm);
     color: var(--texto-suave);
+  }
+
+  .contacto__respaldo-dato {
+    color: var(--texto);
+    font-weight: 600;
+    overflow-wrap: anywhere;
   }
 
   /* Botón de descarga. Usa el acento, igual que la píldora de categoría
