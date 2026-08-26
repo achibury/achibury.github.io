@@ -115,6 +115,54 @@
   --ancho-prosa: 70ch;
   --ancho-contenedor: 1120px;
 
+  /* Ancho de la barra lateral con la tabla de contenidos de un lab.
+
+     256px NO es un numero redondo elegido a ojo: es lo que hace falta
+     para que NINGUN item envuelva, y el que manda es el h2 mas largo
+     del lab de hardening, "Revision de la configuracion final".
+
+     OJO CON ESTO, que es la parte que no se ve venir: el item cambia de
+     ancho al activarse, porque el activo va en peso 700. Medido con las
+     metricas reales de Segoe UI a 14px:
+
+       en reposo (peso 600)   210.4px
+       activo    (peso 700)   219.0px
+
+     Ese es el numero que hay que hacer entrar. El reparto de los 288px:
+
+       288  ancho de la barra
+        -2  borde de la caja (1px por lado)
+       -32  relleno de la caja  (--e-4 por lado)
+       -24  relleno del item    (--e-3 por lado)
+       ---
+       230  para el texto  ->  sobran 11px sobre los 219 del peor caso
+
+     Se probo con 240 y con 256 y los dos se quedan cortos:
+
+       240px -> 216 utiles: el item entra en reposo y SE PARTE EN DOS al
+                activarse. La barra se reacomoda sola justo al entrar a
+                esa seccion, que es cuando el ojo la esta mirando.
+       256px -> 232 utiles, alcanzaba SIN la caja. Con la caja el
+                relleno se come 34px y vuelve a partirse.
+
+     Si algun dia agregas un h2 mas largo que ~230px a 14px, se vuelve a
+     partir. La salida no es achicar la letra: es acortar el titulo o
+     ensanchar la barra, y ensanchar la barra cuesta lo de abajo.
+
+     Lo que se gasta, medido dentro del contenedor (1120 menos 24 de
+     relleno por lado = 1072 utiles):
+
+       prosa (70ch)              603.8px  <- no la toca
+       bloque de codigo mas ancho  707px  <- entra con 29px de sobra
+       columna que queda           736px  = 1072 - 288 - 48 de separacion
+
+     El unico que paga es la imagen ancha, que baja de 1072 a 736px.
+     Es el costo aceptado y solo existe de 1120px de ventana para
+     arriba; mas abajo las imagenes ya se achicaban con la ventana.
+     Verificado que ninguno de los 18 bloques de codigo del lab
+     desborda con la columna en 736px. */
+  --toc-ancho: 288px;
+
   /* Tope de altura para las capturas dentro de un lab. Las capturas de
      terminal son anchas y bajas, pero un diagrama de topologia es casi
      cuadrado y sin tope se come la pantalla entera.
@@ -247,7 +295,14 @@ img {
    queda libre y puede llegar hasta el ancho del contenedor.
 
    Va alineado a la izquierda, no centrado, para que el borde izquierdo
-   del texto coincida con el del header y el footer. */
+   del texto coincida con el del header y el footer.
+
+   Dos paginas se salen de eso a proposito: /sobre-mi usa
+   .contenedor--centrado para angostar y centrar el bloque, y la pagina
+   de un lab CON tabla de contenidos corre el articulo entero a la
+   derecha del indice. En el lab la alineacion no se pierde, se
+   reemplaza por dos bordes limpios (el marco del sitio y el articulo);
+   ver "Tabla de contenidos de un lab" en CLAUDE.md. */
 main :is(p, h1, h2, h3, ul, ol, blockquote, dl) {
   max-width: var(--ancho-prosa);
 }

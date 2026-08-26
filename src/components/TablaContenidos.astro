@@ -1,0 +1,182 @@
+---
+/**
+ * Tabla de contenidos de un lab.
+ *
+ * Recibe los encabezados ya filtrados por `encabezadosParaTOC()`
+ * (src/lib/toc.ts): solo h2, y lista vacia si el lab es demasiado corto
+ * para que la barra valga la pena. Aca no se decide nada de eso, solo
+ * se dibuja.
+ *
+ * Los `slug` salen de `render()`, que es la misma fuente de la que
+ * salen los `id` del HTML del Markdown. Por eso los enlaces apuntan
+ * siempre a un ancla que existe: no hay que generar ids a mano ni
+ * mantenerlos sincronizados con el .md.
+ *
+ * ES UN <details> A PROPOSITO, y es el MISMO marcado en las dos
+ * pantallas. En movil una barra lateral fija no sirve, y un desplegable
+ * escrito a mano necesitaria JavaScript para abrirse, foco gestionado a
+ * mano y aria-expanded. El <details> nativo trae todo eso gratis: el
+ * <summary> ya es un boton, responde a Enter y Espacio, y el lector de
+ * pantalla anuncia si esta expandido o contraido. Cero JavaScript.
+ *
+ * Va `open` de entrada: en escritorio tiene que verse siempre, y en
+ * movil un indice de 8 lineas al principio del articulo es justamente
+ * lo que se quiere leer antes de empezar a bajar.
+ */
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  encabezados: MarkdownHeading[];
+}
+
+const { encabezados } = Astro.props;
+---
+
+{
+  encabezados.length > 0 && (
+    <details class="toc" open>
+      <summary class="toc__titulo titulo-seccion">En esta página</summary>
+
+      {/* El aria-label lo distingue del <nav> del header, que se llama
+          "Navegación principal". Con dos nav en la pagina, cada uno
+          necesita nombre propio o el lector de pantalla anuncia dos
+          landmarks identicos y no se sabe cual es cual. */}
+      <nav aria-label="Secciones de este lab">
+        {/* <ol> y no <ul>: el orden es el del documento y significa
+            algo. El marcador numerico se saca por CSS, pero el lector
+            de pantalla igual anuncia "lista de 8 elementos". */}
+        <ol class="toc__lista">
+          {encabezados.map((h) => (
+            <li>
+              <a href={`#${h.slug}`}>{h.text}</a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </details>
+  )
+}
+
+<style>
+  /* --- La caja ---
+     Sin ella la barra se lee como nota al margen: texto atenuado a 14px
+     al costado del articulo, sin nada que diga donde empieza y donde
+     termina. El problema no era que el texto fuera tenue —subirle el
+     color se probo y cuesta la separacion contra el activo— sino que
+     nada la separaba del cuerpo. Esto ataca eso.
+
+     El margen de abajo es para movil, donde la barra es un bloque mas
+     de la columna entre la cabecera y el articulo: sin el queda pegada
+     al primer h2, que lleva `margin-top: 0` por ser :first-child y no
+     aporta hueco propio. En escritorio el margen cae dentro de la
+     columna de la barra, donde no hay nada debajo, asi que no molesta
+     y no hace falta anularlo. */
+  .toc {
+    margin-bottom: var(--e-8);
+    padding: var(--e-3) var(--e-4) var(--e-4);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--superficie);
+  }
+
+  /* El <summary> se ve en las DOS pantallas, no solo en movil.
+     Escondiendolo en escritorio la barra queda sin rotulo visible y hay
+     que deducir que es un indice; ademas, que se pueda plegar tampoco
+     estorba en escritorio. Un solo diseño para los dos tamaños. */
+  /* El rotulo va a --texto y peso 700, no al --texto-suave de
+     .titulo-seccion. Es la mitad del trabajo de dar presencia: la caja
+     dice donde esta la barra y el rotulo dice que es.
+
+     Comparte color y peso con el item activo, y aun asi no se confunden
+     con el: van a 12px contra 14px, en versalitas y con separacion
+     entre letras, y el activo lleva ademas su barra de acento. */
+  .toc__titulo {
+    cursor: pointer;
+    color: var(--texto);
+    font-weight: 700;
+    /* Pisa el `margin: 0 0 var(--e-6)` que trae .titulo-seccion de
+       global.css. Esos 24px estan pensados para separar un rotulo del
+       bloque que encabeza; aca el rotulo y su lista son UNA unidad y
+       con 24px mas los 12 del relleno quedaban 36px de hueco entre el
+       titulo y su primer item. */
+    margin-bottom: var(--e-2);
+    /* 12px x 1.7 = 20.4px de linea + 12 de relleno arriba y abajo = 44px
+       de alto tactil, el minimo que conviene para un objetivo que se
+       toca con el dedo. */
+    padding-block: var(--e-3);
+  }
+
+  .toc__lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* --- La linea vertical la dibujan los ITEMS, no la lista ---
+     Cada enlace lleva su propio segmento de 1px con `inset box-shadow`,
+     asi que la suma de todos forma una linea continua. Marcar el activo
+     es entonces cambiar UNA propiedad de UN item: el segmento gris pasa
+     a 2px de acento.
+
+     Es mejor que un `border-left` en la lista con un ::before encima:
+     no hay pseudo-elemento, no hay posicionamiento absoluto, no se
+     dibujan dos lineas superpuestas, y como `box-shadow` no ocupa
+     espacio, el texto no se corre ni un pixel al activarse.
+
+     Los items no llevan margen entre si (todo el aire va en el padding
+     del <a>) justamente para que la linea no quede cortada. */
+  .toc__lista a {
+    display: block;
+    padding: var(--e-1) var(--e-3);
+    /* --chip-borde y no --borde: la pista va sobre --superficie (el
+       fondo de la caja), no sobre --fondo, y ahi --borde queda en
+       1.18:1 en claro, o sea invisible. Es el mismo motivo por el que
+       los chips usan su propio borde mas oscuro: un elemento apoyado
+       en una superficie necesita mas contraste que uno sobre el fondo
+       de la pagina. Con --chip-borde son 1.93:1 en claro y 2.53:1 en
+       oscuro, por encima incluso de lo que habia sin caja. */
+    box-shadow: inset 1px 0 0 var(--chip-borde);
+
+    color: var(--texto-suave);
+    text-decoration: none;
+    font-size: var(--t-sm);
+    /* 1.4 y no el 1.7 del cuerpo: un item de dos lineas tiene que
+       leerse como un item, no como dos. */
+    line-height: 1.4;
+    /* 600 en reposo y 700 en el activo, igual que el menu del header.
+       No es un valor libre: Segoe UI NO tiene peso 500, asi que los
+       escalones reales son 300/350/400/600/700 y entre Regular y
+       Semibold no hay nada intermedio. Pedir 500 no cambiaria nada. */
+    font-weight: 600;
+  }
+
+  .toc__lista a:hover {
+    color: var(--texto);
+  }
+
+  /* --- Seccion actual ---
+     TRES señales a la vez: color, peso y la barra de acento.
+
+     Contraste verificado del texto contra --superficie, que es el fondo
+     de la caja donde vive:
+       reposo  --texto-suave   7.24:1 claro / 5.71:1 oscuro
+       activo  --texto        17.06:1 claro / 11.87:1 oscuro
+     La barra de acento contra --superficie: 5.23:1 claro / 9.89:1
+     oscuro, por encima del 3:1 que pide una señal no textual.
+
+     La separacion de color entre reposo y activo es 2.36:1 en claro y
+     2.08:1 en oscuro, los mismos numeros del menu del header. Si algun
+     dia subis el color del reposo esa distancia se achica, pero aca la
+     barra de acento sigue distinguiendo el activo igual: por eso son
+     tres señales y no dos.
+
+     `aria-current` no es solo un gancho de CSS: es lo que hace que el
+     lector de pantalla anuncie "actual" al pasar por el enlace. Estilar
+     el atributo directamente, en vez de una clase, garantiza que las
+     dos cosas no se puedan desincronizar. */
+  .toc__lista a[aria-current] {
+    color: var(--texto);
+    font-weight: 700;
+    box-shadow: inset 2px 0 0 var(--acento);
+  }
+</style>

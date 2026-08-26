@@ -10,16 +10,26 @@
  * genera Astro y no lo escribimos nosotros, hay que estilarlo con
  * :global() desde el contenedor .prosa.
  */
+import type { MarkdownHeading } from 'astro';
 import Base from './Base.astro';
+import TablaContenidos from '../components/TablaContenidos.astro';
 import type { Lab } from '../lib/labs';
 import { ETIQUETAS_CATEGORIA, ETIQUETAS_FUNCION, formatearFecha } from '../lib/labs';
 import { AUTOR } from '../lib/sitio';
 
 interface Props {
   lab: Lab;
+  /**
+   * Encabezados de la tabla de contenidos, YA filtrados por
+   * `encabezadosParaTOC()`. Llegan desde [...id].astro, que es donde
+   * se llama a `render()`. Si viene vacia, este lab no lleva barra y
+   * la pagina se arma a una sola columna.
+   */
+  encabezados: MarkdownHeading[];
 }
 
-const { lab } = Astro.props;
+const { lab, encabezados } = Astro.props;
+const hayTOC = encabezados.length > 0;
 const {
   titulo,
   resumen,
@@ -83,7 +93,7 @@ const datosEstructurados = {
   tipoOG="article"
   datosEstructurados={borrador ? undefined : datosEstructurados}
 >
-  <article class="contenedor">
+  <article class:list={['contenedor', 'lab', { 'lab--con-toc': hayTOC }]}>
     <header class="cabecera">
       {
         borrador && (
@@ -106,8 +116,8 @@ const datosEstructurados = {
            Un lab sin técnicas MITRE no muestra un bloque vacío. */
         herramientas.length > 0 && (
           <div class="cabecera__grupo cabecera__grupo--herramientas">
-            <h2 class="titulo-seccion">Herramientas</h2>
-            <ul class="lista-etiquetas">
+            <p class="titulo-seccion" id="rotulo-herramientas">Herramientas</p>
+            <ul class="lista-etiquetas" aria-labelledby="rotulo-herramientas">
               {herramientas.map((h) => (
                 <li class="etiqueta">{h}</li>
               ))}
@@ -124,8 +134,8 @@ const datosEstructurados = {
            reventaria al construir la pagina. */
         mitre_attack && mitre_attack.length > 0 && (
           <div class="cabecera__grupo cabecera__grupo--mitre">
-            <h2 class="titulo-seccion">MITRE ATT&CK</h2>
-            <ul class="lista-etiquetas">
+            <p class="titulo-seccion" id="rotulo-mitre">MITRE ATT&CK</p>
+            <ul class="lista-etiquetas" aria-labelledby="rotulo-mitre">
               {mitre_attack.map((t) => (
                 <li class="etiqueta">{t}</li>
               ))}
@@ -137,8 +147,8 @@ const datosEstructurados = {
       {
         funcion && funcion.length > 0 && (
           <div class="cabecera__grupo cabecera__grupo--funcion">
-            <h2 class="titulo-seccion">Función</h2>
-            <ul class="lista-etiquetas">
+            <p class="titulo-seccion" id="rotulo-funcion">Función</p>
+            <ul class="lista-etiquetas" aria-labelledby="rotulo-funcion">
               {funcion.map((f) => (
                 <li class="etiqueta">{ETIQUETAS_FUNCION[f]}</li>
               ))}
@@ -148,15 +158,278 @@ const datosEstructurados = {
       }
     </header>
 
+    {/* Va ANTES de la prosa en el HTML aunque en escritorio se dibuje a
+        la derecha. Es el orden correcto en los dos usos que importan:
+        en movil se lee el indice antes del articulo, y con teclado el
+        Tab llega a los enlaces de seccion antes de entrar al cuerpo,
+        que es justamente para lo que sirve un indice. */}
+    <TablaContenidos encabezados={encabezados} />
+
     <div class="prosa">
       <slot />
     </div>
 
     <p class="volver"><a href="/labs/">← Todos los labs</a></p>
+
+    {/* --- Marcado de la seccion que se esta leyendo ---
+
+        Es la UNICA parte de la tabla de contenidos que necesita
+        JavaScript. Todo lo demas (desplegarse en movil, navegar con
+        teclado, saltar a la seccion, quedar fija al costado) ya
+        funciona sin esto.
+
+        Cero dependencias y va en linea, igual que el script del correo
+        de /sobre-mi: son ~30 lineas, y un archivo aparte costaria una
+        peticion HTTP mas que pesa mas que el propio codigo.
+
+        Se emite en TODOS los labs, tambien en los que no llevan barra:
+        ahi `lista` no existe y sale por la primera linea. Podria
+        emitirse condicionalmente, pero un <script is:inline> metido en
+        una expresion de Astro se parsea como JSX y los `<` de las
+        comparaciones lo romperian. No vale la pena por 300 bytes. */}
+    <script is:inline>
+      (function () {
+        var lista = document.querySelector('.toc__lista');
+        if (!lista) return;
+
+        /* Cada enlace con su encabezado. El `decodeURIComponent` no
+           sobra: los slugs llevan tildes (lo que se ve como
+           "#linea-base" es en realidad "#línea-base") y `a.hash` los
+           devuelve percent-encoded. */
+        var porSeccion = new Map();
+        var secciones = [];
+        Array.prototype.forEach.call(lista.querySelectorAll('a[href^="#"]'), function (a) {
+          var h = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+          if (!h) return;
+          porSeccion.set(h, a);
+          secciones.push(h);
+        });
+        if (!secciones.length) return;
+
+        var activo = null;
+        function activar(a) {
+          if (a === activo) return;
+          if (activo) activo.removeAttribute('aria-current');
+          /* "location" y no "page": el enlace del header ya usa "page"
+             para decir en que pagina estas. Esto marca una posicion
+             DENTRO de la pagina, que es lo que significa "location". */
+          if (a) a.setAttribute('aria-current', 'location');
+          activo = a;
+        }
+
+        /* La seccion activa es la ultima cuyo encabezado quedo por
+           encima del 20% del alto de la ventana. Se recalcula entera en
+           vez de mirar que entradas cruzaron: asi da igual en que orden
+           lleguen, funciona al cargar la pagina ya desplazada y no hay
+           que acordarse de cual estaba activa antes.
+
+           Es la UNICA fuente de verdad: los tres disparadores de mas
+           abajo no deciden nada por su cuenta, solo la llaman. */
+        function recalcular() {
+          /* Al fondo del documento gana siempre la ultima seccion.
+
+             Sin esto la ultima no se marca NUNCA cuando lo que cuelga
+             de ella mide menos del 80% de la ventana: su encabezado no
+             alcanza a subir hasta la franja porque no hay contenido
+             abajo que lo empuje, y la pagina se termina antes. */
+          var doc = document.documentElement;
+          if (window.innerHeight + window.scrollY >= doc.scrollHeight - 2) {
+            activar(porSeccion.get(secciones[secciones.length - 1]));
+            return;
+          }
+
+          var limite = window.innerHeight * 0.2;
+          var ultima = null;
+          for (var i = 0; i < secciones.length; i++) {
+            if (secciones[i].getBoundingClientRect().top < limite) ultima = secciones[i];
+          }
+          activar(ultima ? porSeccion.get(ultima) : null);
+        }
+
+        /* --- Disparador 1: cruzar la linea del 20% ---
+
+           El rootMargin arma una region que va desde MUY arriba de la
+           ventana hasta el 20% de su alto. O sea que un encabezado
+           "intersecta" exactamente mientras esta por encima de esa
+           linea, que es la misma condicion que usa recalcular().
+
+           OJO: el 20% de `recalcular()` y el -80% de aca son el mismo
+           numero visto de dos maneras. Si cambias uno, cambia el otro.
+
+           NO uses una franja fina (algo como '-15% 0px -75% 0px').
+           Parece mas prolijo y da histeresis, pero tiene un agujero:
+           esa franja mide ~90px, y un fotograma de scroll rapido
+           —una pasada de trackpad, Av Pag, arrastrar la barra— avanza
+           mucho mas que eso. El encabezado ATRAVIESA la franja sin
+           quedar nunca adentro, el estado va de "fuera" a "fuera", y
+           el observador no dispara: el indice se queda clavado en la
+           seccion anterior. Medido: 7000px de scroll sin que el item
+           activo se moviera.
+
+           Con una region enorme eso no puede pasar, porque el cambio
+           de estado no depende de caer dentro de nada: basta con
+           cruzar la linea. Los 9999px de arriba son eso, "todo lo que
+           haya por encima".
+
+           Se pierde la histeresis, y esta bien: solo importaria con un
+           encabezado detenido justo sobre la linea, y el scroll
+           quieto no tiembla.
+
+           Ademas dispara una vez al empezar a observar, asi que si
+           entras con un #ancla o recargas a media pagina, el item
+           correcto queda marcado de entrada. */
+        var io = new IntersectionObserver(recalcular, {
+          rootMargin: '9999px 0px -80% 0px',
+        });
+        secciones.forEach(function (h) {
+          io.observe(h);
+        });
+
+        /* --- Disparador 2: el fondo del documento ---
+           Un centinela de 1px al final del <body>. Entra en la ventana
+           exactamente cuando el documento llega a su ultimo pixel, o
+           sea al tocar fondo, y vuelve a salir al subir.
+
+           Solo DISPARA el recalculo; quien decide es recalcular(), que
+           vuelve a comprobar la posicion por su cuenta. Asi no hay dos
+           versiones de "estoy al fondo" que se puedan contradecir.
+
+           Va al final del <body> y no al final del articulo a proposito:
+           abajo del articulo todavia esta el footer, asi que un
+           centinela ahi se activaria antes de llegar al fondo. */
+        var centinela = document.createElement('div');
+        centinela.setAttribute('aria-hidden', 'true');
+        centinela.style.height = '1px';
+        document.body.appendChild(centinela);
+        new IntersectionObserver(recalcular).observe(centinela);
+
+        /* --- Disparador 3: el clic en un item ---
+           Al saltar a una seccion, el encabezado destino aterriza POR
+           ENCIMA de la franja (a la altura del scroll-margin-top), asi
+           que NO la cruza: el observador no se entera y el indice sigue
+           marcando la seccion de donde veniamos.
+
+           Marcarlo aca no pelea con el observador. Es exactamente la
+           misma respuesta que daria recalcular() en esa posicion —el
+           destino queda por encima del limite y todo lo que sigue por
+           debajo—, solo que llega de inmediato en vez de esperar un
+           cruce que no va a ocurrir. Si despues el usuario mueve el
+           scroll, el observador retoma sin nada que deshacer.
+
+           Va en la lista y no en cada enlace: un solo escucha, y cubre
+           tanto el clic como el Enter del teclado, que dispara el mismo
+           evento. */
+        lista.addEventListener('click', function (e) {
+          var enlace = e.target.closest('a[href^="#"]');
+          if (enlace) activar(enlace);
+        });
+      })();
+    </script>
   </article>
 </Base>
 
 <style>
+  /* ======================================================================
+     DOS COLUMNAS: ARTICULO + TABLA DE CONTENIDOS
+
+     Solo se activa si el lab lleva barra (.lab--con-toc). Sin ella la
+     pagina queda como estaba, a una columna: nada de reservar 240px
+     vacios al costado.
+
+     El punto de corte no es un tamaño de moda, sale de una cuenta. La
+     columna del articulo tiene que seguir aguantando el bloque de
+     codigo mas ancho del lab: 707px medidos en el navegador (clonando
+     el <pre> con width: max-content). Como la columna vale
+     "ventana - 48 de relleno - 288 de barra - 48 de separacion", hace
+     falta una ventana de 1091px. 69rem son 1104px y dejan 720px de
+     columna, con margen. Comprobado que ninguno de los 18 bloques de
+     codigo del lab desborda.
+
+     Si tocas --toc-ancho, este numero se mueve con el: son la misma
+     cuenta. Por eso van comentados los dos.
+
+     Por debajo de eso la barra vuelve a ser el <details> desplegable
+     arriba del articulo, que es como se ve en movil.
+
+     POR QUE A LA IZQUIERDA: se lee de izquierda a derecha, asi que el
+     ojo encuentra el indice antes de entrar al texto, y de paso el
+     final de cada linea queda libre en vez de competir con la barra.
+
+     El costo es que el articulo se corre 336px respecto del header y
+     del footer, que siguen en el borde del contenedor. La pagina queda
+     entonces con DOS bordes verticales en vez de uno:
+
+       184px  marca del header, indice, footer   (el marco del sitio)
+       520px  chips, h1, resumen y cuerpo        (el articulo entero)
+
+     Los dos son limpios y cada uno es consistente consigo mismo. Eso es
+     lo que hay que defender: ver el punto 11 de NO TOCAR, porque hay
+     una forma muy facil de romperlo sin darse cuenta.
+     ====================================================================== */
+  @media (min-width: 69rem) {
+    .lab--con-toc {
+      display: grid;
+      /* minmax(0, 1fr) y NO 1fr a secas. Un `1fr` pelado tiene como
+         minimo automatico el min-content de lo que contenga, y aca
+         adentro hay tablas y bloques de codigo con lineas larguisimas
+         que no envuelven: la columna se estiraria hasta el ancho de la
+         linea mas larga y le meteria scroll horizontal a la pagina
+         entera. El minmax(0, ...) le permite achicarse. */
+      grid-template-columns: var(--toc-ancho) minmax(0, 1fr);
+      column-gap: var(--e-12);
+      /* start, no el stretch de fabrica: un item estirado ocupa toda la
+         altura de su fila, y entonces `position: sticky` no tiene por
+         donde moverse. Es lo que hace que la barra siga el scroll de
+         verdad en vez de quedarse quieta arriba. */
+      align-items: start;
+    }
+
+    /* LA CABECERA VA EN LA COLUMNA 2, junto con la prosa. NO cruza las
+       dos columnas. Es la regla que sostiene todo el diseño y la que
+       mas facil se rompe: ver NO TOCAR punto 11.
+
+       Si cruza, se ancla al borde del contenedor (184px) mientras su
+       propio primer parrafo se va con la prosa (520px), y el h1 queda
+       desalineado de su propio cuerpo por 336px. El corte no aparece
+       contra el header: aparece DENTRO del articulo, que se ve mucho
+       peor. Medido: con la cabecera en la columna 2, el h1 y su primer
+       parrafo comparten los 520px exactos. */
+    .lab--con-toc .cabecera {
+      grid-area: 1 / 2;
+    }
+
+    .lab--con-toc .prosa {
+      grid-area: 2 / 2;
+    }
+
+    .lab--con-toc .volver {
+      grid-column: 2;
+    }
+
+    /* :global() porque .toc se declara en TablaContenidos.astro y lleva
+       el hash de ESE componente, no el de este archivo. Va acotado a
+       .lab--con-toc, que si esta scopeado, asi que no se escapa. */
+    .lab--con-toc > :global(.toc) {
+      /* Fila 1 a 3, o sea que ABARCA LAS DOS FILAS de la rejilla.
+         No es para estirar la barra —mide lo que mide— sino porque
+         `position: sticky` solo puede desplazarse dentro de su area de
+         rejilla. Puesta solo en la fila 1, su area seria el alto de la
+         cabecera y la barra se despegaria despues de ~400px de scroll.
+
+         Y arranca ARRIBA, al costado de la cabecera, y no debajo de
+         ella: debajo funciona igual pero deja ~400px vacios en la
+         esquina superior izquierda, que es la parte mas valiosa de la
+         primera pantalla, y empuja el indice por debajo del pliegue. */
+      grid-area: 1 / 1 / 3 / 2;
+      position: sticky;
+      top: var(--e-8);
+      /* Red de seguridad para un lab futuro con muchas secciones: con
+         8 items la barra mide 221px y esto no llega a actuar nunca. */
+      max-height: calc(100vh - var(--e-16));
+      overflow-y: auto;
+    }
+  }
+
   .cabecera {
     padding-bottom: var(--e-8);
     border-bottom: 1px solid var(--borde);
@@ -253,6 +526,24 @@ const datosEstructurados = {
        h3       21px     550    --texto-medio    barra de acento a la izq.
        cuerpo   16px     400    --texto          --
      ====================================================================== */
+
+  /* --- Aterrizaje de los enlaces del indice ---
+     Sin esto, al saltar a #una-seccion el encabezado queda pegado al
+     borde de arriba de la ventana y se lee como si fuera el final de la
+     seccion anterior. El header de este sitio NO es fijo (no hay un
+     solo `position` en Header.astro), asi que no hay que compensar su
+     alto: alcanza con un respiro.
+
+     Va tambien en el h3 aunque el indice solo liste h2, porque los h3
+     igual tienen id y se pueden enlazar directo. */
+  .prosa :global(:is(h2, h3)) {
+    scroll-margin-top: var(--e-6);
+  }
+
+  /* NO agregues un resaltado `:target` en los encabezados. Estuvo y se
+     quito: `:target` no se limpia solo, asi que el encabezado quedaba
+     pintado hasta navegar a otra ancla, y el aria-current de la barra
+     ya dice donde estas de una forma que SI se actualiza. */
 
   .prosa :global(h2) {
     margin-top: var(--h2-arriba);

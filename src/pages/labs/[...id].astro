@@ -11,11 +11,15 @@
  * directa.
  *
  * render(lab) convierte el Markdown en un componente <Contenido /> que
- * se inserta en el <slot /> del layout Lab.
+ * se inserta en el <slot /> del layout Lab, y de paso devuelve los
+ * encabezados del Markdown ya con su `slug`: son los mismos ids que
+ * quedan en el HTML, asi que la tabla de contenidos se arma sola desde
+ * ahi y no hay anclas que mantener a mano.
  */
 import { render } from 'astro:content';
 import LabLayout from '../../layouts/Lab.astro';
 import { getLabsPublicados, type Lab } from '../../lib/labs';
+import { encabezadosParaTOC } from '../../lib/toc';
 
 export async function getStaticPaths() {
   const labs = await getLabsPublicados();
@@ -30,9 +34,17 @@ interface Props {
 }
 
 const { lab } = Astro.props;
-const { Content } = await render(lab);
+const { Content, headings } = await render(lab);
+
+/**
+ * Que va en la tabla de contenidos, o lista vacia si este lab no lleva.
+ * La decision (solo h2, minimo de secciones y de palabras) esta en
+ * lib/toc.ts; aca solo se juntan las dos piezas que hacen falta, los
+ * encabezados y el cuerpo.
+ */
+const encabezados = encabezadosParaTOC(headings, lab.body ?? '');
 ---
 
-<LabLayout lab={lab}>
+<LabLayout lab={lab} encabezados={encabezados}>
   <Content />
 </LabLayout>

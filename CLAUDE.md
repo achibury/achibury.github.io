@@ -32,6 +32,11 @@ de Volatility — son **contenido de ejemplo ficticio** con `borrador: true`.
 Se conservan como referencia de formato y no generan página. Si el conteo
 de páginas no te cuadra, esa es la razón; no está roto.
 
+Los labs largos llevan **tabla de contenidos**: barra a la derecha en
+escritorio, desplegable en móvil. Se enciende sola según el largo del
+lab, así que hoy la tiene el de hardening y ninguno de los dos
+borradores. Ver "Tabla de contenidos de un lab".
+
 ## Pendientes
 
 Cosas abiertas a hoy, verificadas contra el código:
@@ -51,6 +56,13 @@ Cosas abiertas a hoy, verificadas contra el código:
   lo vuelve a romper. Queda anotado, **no arreglado**: la salida
   probablemente sea un menú colapsable, y eso es una decisión de diseño
   aparte.
+
+- **El filtro de `/labs` está decidido pero NO construido.** El análisis
+  completo (qué lógica, qué controles, cómo degrada sin JavaScript) está
+  en "Filtros de /labs". Se construye cuando haya labs que filtrar, no
+  antes. Y hay **dos cosas que resolver primero**, las dos anotadas ahí:
+  que `funcion` sea opcional en el schema, y que `categoria` y `funcion`
+  se solapen.
 
 No hay un próximo lab decidido en este archivo. Si vas a escribir uno,
 pregúntame cuál en vez de asumir: hubo un plan viejo de hacer uno de
@@ -108,8 +120,8 @@ Gestionar el servidor en background con `astro dev stop`, `astro dev status` y `
 
 ## NO TOCAR
 
-Siete cosas que **parecen** redundantes o simplificables y no lo son. Cada
-una se ve como código que sobra, y en **los siete casos** quitarla rompe
+Once cosas que **parecen** redundantes o simplificables y no lo son. Cada
+una se ve como código que sobra, y en **los once casos** quitarla rompe
 algo sin que el build se queje: el daño solo se ve mirando la página.
 
 ### 1. El selector `:is()` de `Lab.astro`
@@ -243,6 +255,110 @@ por su cuenta, desde su hoja de estilos por defecto. Fijar solo
 `margin-block` deja ese valor vivo. Ya pasó: el bloque de hallazgo
 arrancaba 40px a la derecha del párrafo y del bloque de código de al lado,
 y la causa no era ninguna regla nuestra sino una que no habíamos anulado.
+
+### 8. `--toc-ancho: 288px` (y no 240, y tampoco 256)
+
+**Parece** que 240px alcanzan de sobra: el h2 más largo del lab de
+hardening, "Revisión de la configuración final", mide **210,4px** a 14px
+y una barra de 240 deja 216px útiles.
+
+**No.** El ítem **cambia de ancho al activarse**, porque el activo va en
+peso 700. Medido con las métricas reales de Segoe UI a 14px:
+
+| Estado | Peso | Ancho de tinta |
+| --- | --- | --- |
+| Reposo | 600 | 210,4px |
+| **Activo** | **700** | **219,0px** |
+
+Con 216px útiles el ítem entraba en reposo y **se partía en dos al
+activarse**: la barra se reacomodaba sola justo al entrar a esa sección,
+que es exactamente cuando el ojo la está mirando.
+
+256px lo arreglaban **mientras la barra no tuvo caja**. Al agregarla, el
+relleno y el borde se comen 34px más y vuelve a partirse. El reparto de
+los 288px actuales:
+
+```
+ 288  ancho de la barra
+  -2  borde de la caja
+ -32  relleno de la caja  (--e-4 por lado)
+ -24  relleno del ítem    (--e-3 por lado)
+ ---
+ 230  para el texto  ->  sobran 11px sobre los 219 del peor caso
+```
+
+El punto de corte de la rejilla (`69rem` en `Lab.astro`) sale de la misma
+cuenta: si cambias uno hay que recalcular el otro. Los dos están
+comentados con la aritmética completa.
+
+### 9. `minmax(0, 1fr)` y `align-items: start` en la rejilla del lab
+
+Las dos están en el `@media` de `Lab.astro` y las dos parecen ruido.
+
+**`minmax(0, 1fr)`** parece que se puede escribir `1fr` a secas. **No.**
+Un `1fr` pelado tiene como mínimo automático el `min-content` de lo que
+contenga, y adentro hay tablas y bloques de código con líneas larguísimas
+que no envuelven (ver punto 2). La columna se estiraría hasta el ancho de
+la línea más larga y le metería scroll horizontal a **la página entera**.
+El `minmax(0, …)` le permite achicarse.
+
+**`align-items: start`** parece cosmético. **No: sin eso la barra no se
+queda fija.** El valor de fábrica es `stretch`, que estira el ítem a toda
+la altura de su fila; un elemento que ya ocupa toda su área no tiene por
+dónde desplazarse, así que `position: sticky` deja de hacer efecto. No da
+error ni se ve mal — la barra simplemente se va con el scroll.
+
+### 10. El `rootMargin` gigante del scroll-spy
+
+```js
+rootMargin: '9999px 0px -80% 0px'
+```
+
+**Parece** un número puesto a lo bruto, que se arregla con una franja
+prolija como `-15% 0px -75% 0px`.
+
+**No.** Esa franja mide ~90px y un fotograma de scroll rápido avanza más
+que eso: el encabezado la atraviesa sin quedar dentro, el estado no
+cambia y el observador **no dispara**. Medido con la franja puesta: 7.000
+píxeles de scroll sin que el ítem activo se moviera. La versión "prolija"
+es exactamente la que está rota.
+
+Explicado entero en "Tabla de contenidos de un lab".
+
+### 11. La cabecera del lab NO cruza las dos columnas
+
+```css
+.lab--con-toc .cabecera { grid-area: 1 / 2; }   /* columna 2, con la prosa */
+```
+
+**Parece** que la cabecera debería ocupar el ancho completo, como
+cualquier encabezado de página. Es lo primero que uno escribe:
+`grid-column: 1 / -1`. Y de hecho **estuvo así**.
+
+**No.** Con la barra a la izquierda, cruzar las dos columnas ancla la
+cabecera al borde del contenedor mientras el contenido que le sigue se
+queda en la columna del artículo. Medido:
+
+| | Cruzando las dos columnas | En la columna 2 |
+| --- | --- | --- |
+| `h1` del lab | 184px | **520px** |
+| Su primer párrafo | 520px | **520px** |
+| Desalineación | **336px** | **0** |
+
+O sea que el título del lab queda separado de su propio cuerpo por
+336px. **El corte no aparece contra el header: aparece DENTRO del
+artículo**, entre un título y el párrafo que le sigue, y eso se ve
+bastante peor que el desplazamiento contra el marco del sitio.
+
+La página está pensada con **dos** bordes verticales, no tres:
+
+```
+184px   marca del header · índice · footer      (el marco del sitio)
+520px   chips · h1 · resumen · cuerpo · volver  (el artículo entero)
+```
+
+Cualquier cosa que saque un elemento del artículo de la columna 2 agrega
+un tercer borde y rompe eso. El build no dice nada.
 
 ## Convenciones
 
@@ -451,17 +567,37 @@ mayormente cambiar ese bloque.
 
 ### Anchos
 
-Dos variables, tres comportamientos:
+Tres variables:
 
 - `--ancho-prosa: 70ch` — texto corrido. La unidad `ch` es el ancho del
   carácter cero, así que dice literalmente "70 caracteres por línea".
+  **Medido con Segoe UI a 16px son 603,8px**, bastante menos de lo que
+  uno supone al ver "70ch".
 - `--ancho-contenedor: 1120px` — header, footer, listados.
+- `--toc-ancho: 288px` — la barra de la tabla de contenidos de un lab.
 - Los bloques anchos (`pre`, `img`, `table`) **no** están en la regla de
   medida de lectura, así que quedan libres y llegan hasta el contenedor.
 
+Vale la pena tener presente el reparto real dentro del contenedor
+(1120 menos 24 de relleno por lado = **1072px útiles**), porque explica
+por qué la barra de contenidos cabe sin apretar la lectura:
+
+| | Ancho |
+| --- | --- |
+| Prosa (70ch) | 603,8px |
+| Bloque de código más ancho del lab de hardening | 707px |
+| Imagen ancha | hasta 1072px |
+
+O sea que a la derecha de la prosa sobraban **468px**. La restricción
+nunca fue el texto: son las imágenes.
+
 La prosa va alineada a la izquierda, no centrada, para que su borde coincida
-con el del header y el footer. La excepción es `/sobre-mi`, que usa
-`.contenedor--centrado` para angostar el bloque y centrarlo.
+con el del header y el footer. Hay dos excepciones a propósito:
+`/sobre-mi`, que usa `.contenedor--centrado` para angostar el bloque y
+centrarlo, y la página de un lab **con** tabla de contenidos, donde el
+artículo entero se corre a la derecha del índice. Ahí la alineación no se
+pierde: se reemplaza por dos bordes limpios, el del marco del sitio y el
+del artículo. Ver "Tabla de contenidos de un lab".
 
 ### Tipografía
 
@@ -567,7 +703,12 @@ vez de píxeles sueltos.
 ### Color
 
 Paleta gris pizarra con **un** color de acento (teal), usado con moderación:
-enlaces, la píldora de categoría y el marcador del h3. Nada más.
+enlaces, la píldora de categoría, el marcador del h3 y la barra del ítem
+activo de la tabla de contenidos. Nada más.
+
+Los dos últimos son el mismo signo para lo mismo — "estás acá" — y por eso
+se dibujan igual: una barra angosta de acento al costado izquierdo. Si
+agregas un quinto uso, que sea por la misma razón.
 
 Modo oscuro **solo** por `prefers-color-scheme`, sin botón de cambio manual.
 Es deliberado: menos piezas que mantener, y ningún JavaScript ni estado que
@@ -587,6 +728,503 @@ El punteado no es capricho. En modo oscuro `--acento` (#5eead4) y `--texto`
 (#e2e8f0) quedan a **1.20:1** de contraste entre sí — medido, no supuesto —
 así que dos barras de 2px con esos colores se verían prácticamente iguales.
 Además, confiar solo en el color deja fuera a quien no distingue tonos.
+
+## Tabla de contenidos de un lab
+
+Barra con las secciones del lab: fija a la derecha en escritorio,
+desplegable arriba del artículo en móvil.
+
+### Las tres piezas
+
+| Archivo | Qué hace |
+| --- | --- |
+| `src/lib/toc.ts` | Decide **si** va y **qué** entra. Aritmética pura, sin `astro:content` |
+| `src/components/TablaContenidos.astro` | La dibuja y estila |
+| `src/layouts/Lab.astro` | La rejilla de dos columnas y el script de sección actual |
+
+`toc.ts` está aparte de `labs.ts` a propósito: `labs.ts` importa
+`astro:content`, que solo existe dentro de Astro, y esto conviene poder
+verificarlo con `node` sin levantar el sitio.
+
+Los `slug` salen de `render()`, que es la misma fuente de la que salen
+los `id` del HTML. Por eso los enlaces apuntan siempre a un ancla que
+existe: **no hay anclas que mantener a mano** y la barra se adapta sola a
+cada lab.
+
+### Solo h2, nunca h3
+
+El lab de hardening tiene **8 h2 y 20 h3**. Los números de por qué no
+entran los dos:
+
+| | Ítems | Alto |
+| --- | --- | --- |
+| h2 + h3 | 28 | **773px** |
+| solo h2 | 8 | **221px** |
+
+773px no entran en un viewport de ~900px: la barra necesitaría su propio
+scroll, y una tabla de contenidos que hay que desplazar para leerla deja
+de ser un mapa.
+
+Tampoco entran a lo ancho: el h3 más largo mide 263px a 13px contra los
+232px útiles de la barra, así que se partiría en dos.
+
+Y **anidarlos colapsados es peor**, no mejor: son 8 desplegables que el
+lector tiene que abrir uno por uno para saber qué hay adentro. El valor
+de un índice es leerlo de un vistazo.
+
+### El umbral mide PALABRAS, no encabezados
+
+```
+>= 4 h2  Y  >= 1200 palabras (sin contar bloques de código)
+```
+
+Contar secciones **no alcanza**, y este es el dato que lo demuestra:
+
+| Lab | h2 | Palabras | Barra |
+| --- | --- | --- | --- |
+| hardening-router-cisco | 8 | 2125 | **sí** |
+| deteccion-powershell (borrador) | 8 | 516 | no |
+| triaje-memoria (borrador) | 6 | 516 | no |
+
+Fíjate en los dos primeros: **la misma cantidad de h2 y 4 veces menos
+texto**. Contar encabezados mide cómo escribes, no cuánto hay que
+recorrer. El de PowerShell son ~3 pantallas y la barra le sobra; el de
+hardening son ~11.700px, unas 13 pantallas.
+
+Los bloques de código se descuentan del conteo porque 100 líneas de
+`show running-config` no son carga de lectura: se escanean o se saltan.
+
+`encabezadosParaTOC()` devuelve una **lista vacía** en vez de un booleano.
+Así arriba hay una sola cosa que mirar: si viene vacía no se dibuja nada
+y la página se arma a una sola columna, sin reservar 288px al costado.
+
+### Dónde va, y por qué a la izquierda
+
+A la izquierda, con `grid-template-columns: var(--toc-ancho) minmax(0, 1fr)`
+desde `69rem`. Se lee de izquierda a derecha, así que el ojo encuentra el
+índice antes de entrar al texto, y el final de cada línea queda libre en
+vez de competir con la barra.
+
+El reparto de anchos queda así:
+
+| | Antes | Con barra |
+| --- | --- | --- |
+| Prosa | 603,8px | **603,8px** (intacta) |
+| Bloque de código más ancho | 707px | **707px** (entra, 29px de sobra) |
+| Imagen ancha | 1072px | **736px** (−31%) |
+
+Los 707px están **medidos en el navegador**, no calculados: se clonó cada
+`<pre>` con `width: max-content` y se leyó el ancho. Verificado además
+que **ninguno de los 18 bloques de código desborda** con la columna en
+736px.
+
+**La imagen es el único que paga**, y es el costo aceptado. Se verificó
+que las capturas de terminal siguen legibles a 736px: la letra baja de
+~14px efectivos a ~10,6px, apretada pero leíble. Si alguna se vuelve
+ilegible, la salida correcta no es angostar la barra sino convertirla en
+bloque de código, que es lo que la regla de "Capturas e imágenes" ya pide
+para texto de terminal.
+
+### Dos bordes verticales, y hay que defenderlos
+
+El costo de la izquierda es que el artículo se corre 336px respecto del
+header y del footer. La página queda con **dos** bordes en vez de uno:
+
+```
+184px   marca del header · índice · footer      (el marco del sitio)
+520px   chips · h1 · resumen · cuerpo · volver  (el artículo entero)
+```
+
+Los dos son limpios y cada uno es consistente consigo mismo. Un tercer
+borde sí rompe el diseño, y hay una forma muy fácil de agregarlo sin
+darse cuenta: **que la cabecera del lab vuelva a cruzar las dos
+columnas**. Está explicado en "NO TOCAR" punto 11, con los números.
+
+Se probó primero esa versión y el escalón entre el `h1` y su primer
+párrafo era claramente lo peor de las dos opciones, peor incluso que la
+desalineación contra el header.
+
+**La barra arranca arriba, al costado de la cabecera**, y abarca las dos
+filas de la rejilla (`grid-area: 1 / 1 / 3 / 2`). Las dos cosas tienen
+motivo:
+
+- **Abarcar las dos filas no es para estirarla**, es porque
+  `position: sticky` solo se desplaza dentro de su área de rejilla. En la
+  fila 1 sola, su área sería el alto de la cabecera y la barra se
+  despegaría tras ~400px de scroll. Verificado: con el área de dos filas,
+  tras 5.000px la barra sigue fija a 32px del borde.
+- **Arriba y no debajo de la cabecera.** Debajo funciona igual, pero deja
+  ~400px vacíos en la esquina superior izquierda —la parte más valiosa de
+  la primera pantalla— y empuja el índice por debajo del pliegue.
+
+Ver "NO TOCAR" puntos 8, 9 y 11 antes de tocar el ancho o la rejilla.
+
+### La caja, y por qué NO se subió el color del reposo
+
+La barra va en una caja propia: fondo `--superficie`, borde de 1px,
+radio y relleno. El rótulo "EN ESTA PÁGINA" va a `--texto` y peso 700.
+
+Sin eso se leía como nota al margen — texto atenuado a 14px al costado
+del artículo, sin nada que dijera dónde empieza y dónde termina. Se
+evaluaron las dos salidas y **la causa no era el color del texto**:
+
+| | Subir el reposo a `--texto-medio` | La caja |
+| --- | --- | --- |
+| Contraste del reposo | 10,35:1 / 9,77:1 | 7,24:1 / 5,71:1 |
+| **Separación reposo↔activo** | **1,72:1 / 1,48:1** | **2,36:1 / 2,08:1** |
+| Ancho que cuesta | 0 | 32px |
+
+Subir el reposo cuesta justo la señal que distingue al activo, y deja
+esos números en los mismos valores por los que el cambio ya se había
+descartado en el menú del header. La caja ataca lo que realmente
+fallaba —que nada separaba la barra del cuerpo— y no gasta contraste.
+
+**La pista cambió de `--borde` a `--chip-borde` por culpa de la caja.**
+La línea vertical que recorre los ítems vivía sobre `--fondo`, donde
+`--borde` daba 1,23:1. Sobre `--superficie` cae a **1,18:1** en claro: se
+vuelve invisible, y la barra de acento del activo queda flotando sin
+riel. Con `--chip-borde` son **1,93:1 y 2,53:1**, mejor incluso que antes
+de la caja. Es el mismo motivo que ya está escrito para los chips: algo
+apoyado sobre una superficie necesita más contraste que algo sobre el
+fondo de la página.
+
+El rótulo comparte color y peso con el ítem activo y aun así no se
+confunden: 12px contra 14px, versalitas y separación entre letras, y el
+activo lleva además su barra de acento.
+
+### Móvil: es un `<details>`, y es el MISMO marcado
+
+No hay dos versiones. Un solo `<details open>` que en escritorio cae en la
+columna de la derecha y en móvil queda como bloque desplegable arriba del
+artículo.
+
+`<details>` nativo y no un desplegable escrito a mano porque trae gratis
+lo que si no habría que programar: el `<summary>` ya es un botón, responde
+a Enter y Espacio, y el lector de pantalla anuncia si está expandido o
+contraído. **Cero JavaScript.**
+
+Va `open` de entrada. En móvil eso son ~303px arriba del artículo (~47%
+de una pantalla de 640px de alto), la caja incluida. Se aceptó a cambio de no tener dos
+marcados: son 8 líneas y el lector pasa por ellas una vez. Si algún día
+molesta, se cierra en móvil y se fuerza abierta en escritorio con
+`details::details-content { content-visibility: visible }` — una regla.
+
+El `<summary>` **se ve en las dos pantallas**. Escondiéndolo en escritorio
+la barra queda sin rótulo visible y hay que deducir que es un índice.
+
+### La sección actual es la única parte con JavaScript
+
+Sin el script, `scroll-margin-top` sigue haciendo que el encabezado no
+aterrice pegado al borde de la ventana: los enlaces del índice navegan
+bien igual. Lo único que se pierde es el seguimiento.
+
+**No agregues un resaltado `:target` en el encabezado.** Estuvo, como
+respaldo sin JavaScript, y se quitó: `:target` no se limpia solo, así que
+el encabezado quedaba pintado hasta navegar a otra ancla.
+
+#### Una sola fuente de verdad y tres disparadores
+
+`recalcular()` es la **única** función que decide cuál sección está
+activa; los tres disparadores solo la llaman. Esa separación es lo que
+evita que se contradigan entre sí.
+
+| Disparador | Para qué |
+| --- | --- |
+| `IntersectionObserver` sobre los h2 | El caso normal: seguir el scroll |
+| Centinela de 1px al final del `<body>` | Tocar fondo |
+| `click` en la lista | Saltar a una sección |
+
+Los dos últimos **no son adornos**: sin ellos hay dos casos en los que el
+índice se queda clavado, y los dos se vieron en uso.
+
+- **Al hacer clic, el destino aterriza POR ENCIMA de la línea y nunca la
+  cruza**, así que el observador no se entera y el índice sigue marcando
+  la sección de donde veníamos. El escucha de `click` lo marca al
+  instante. No pelea con el observador: es la misma respuesta que daría
+  `recalcular()` en esa posición, solo que llega sin esperar un cruce que
+  no va a ocurrir.
+- **La última sección no se marca nunca** si lo que cuelga de ella mide
+  menos del 80% de la ventana: su encabezado no alcanza a subir hasta la
+  línea porque no hay contenido abajo que lo empuje. El centinela dispara
+  el recálculo al llegar al fondo. Va al final del `<body>` y no del
+  artículo a propósito: debajo del artículo todavía está el footer.
+
+#### El `rootMargin` es un semiplano, NO una franja
+
+`9999px 0px -80% 0px`. La región va desde muy arriba de la ventana hasta
+el 20% de su alto, o sea que un encabezado intersecta exactamente
+mientras está por encima de esa línea — la misma condición que usa
+`recalcular()`. **Los dos números son el mismo umbral visto de dos
+maneras: si cambias uno, cambia el otro.**
+
+**No lo "ordenes" convirtiéndolo en una franja fina** tipo
+`-15% 0px -75% 0px`. Parece más prolijo y da histéresis, pero esa franja
+mide ~90px y un fotograma de scroll rápido —trackpad, Av Pág, arrastrar
+la barra— avanza mucho más: el encabezado **atraviesa la franja sin
+quedar nunca dentro**, el estado va de "fuera" a "fuera" y el observador
+no dispara. Medido con la franja puesta: **7.000px de scroll sin que el
+ítem activo se moviera**. Con el semiplano el cambio de estado no depende
+de caer dentro de nada, solo de cruzar la línea, así que funciona a
+cualquier velocidad.
+
+Se pierde la histéresis y está bien: solo importaría con un encabezado
+detenido justo sobre la línea, y el scroll quieto no tiembla.
+
+El `aria-current` va en `"location"` y no `"page"`: el enlace del header
+ya usa `"page"` para decir en qué página estás, y esto marca una posición
+**dentro** de la página. Se estila el atributo directamente y no una
+clase, para que lo visual y lo anunciado no puedan desincronizarse.
+
+El ítem activo se distingue por **tres** señales: color (`--texto-suave` →
+`--texto`), peso (600 → 700) y la barra de acento. Los contrastes van
+medidos contra `--superficie`, que es el fondo de la caja donde vive el
+texto, no contra `--fondo`: reposo 7,24:1 claro / 5,71:1 oscuro; activo
+17,06:1 y 11,87:1. La barra de acento da 5,23:1 y 9,89:1, por encima del
+3:1 que pide una señal no textual.
+
+La **separación de color entre reposo y activo** es 2,36:1 en claro y
+2,08:1 en oscuro, los mismos números del menú del header. Ese es el valor
+que hay que defender si algún día se toca el color del reposo: se evaluó
+subirlo a `--texto-medio` para dar presencia y caía a 1,72:1 y 1,48:1,
+justo los valores por los que ese cambio ya se había descartado en el
+header. La presencia se resolvió con la caja, que no cuesta contraste.
+
+**El header de este sitio NO es fijo** (no hay un solo `position` en
+`Header.astro`), así que el `scroll-margin-top` no tiene que compensar su
+alto: alcanza con un respiro. Casi todas las guías de TOC asumen lo
+contrario.
+
+### Lo que cuesta
+
+Página del lab, medido:
+
+| | Bruto | Gzip | Peticiones CSS |
+| --- | --- | --- | --- |
+| Antes | 42.120 | 11.852 | 1 |
+| Después | 47.928 | 13.714 | **2** |
+
+La petición de más no es un descuido: los estilos de `Lab.astro` pasaron
+de 3.788 a 5.241 bytes y cruzaron el umbral de 4kB con el que Astro
+decide si mete el CSS en línea o lo saca a un archivo. Con un solo lab no
+se gana nada; con veinte, ese archivo se cachea entre todos.
+
+**Sigue habiendo cero archivos `.js`**: el script va en línea.
+
+## Filtros de /labs
+
+**Decidido, NO construido.** Está acá para retomarlo con el contexto
+puesto, no para que exista a medias en el código. Se construye cuando
+haya labs que filtrar — ver el umbral más abajo.
+
+### Dos cosas que hay que resolver ANTES
+
+**1. `funcion` es opcional en el schema.** Un lab que no la declare **no
+aparecería bajo ninguna selección de función**: solo se lo encontraría con
+el filtro limpio. Hoy los tres labs la declaran, así que no muerde, pero
+el día que escribas uno de `notas` o `herramienta` sin función, desaparece
+del filtro sin aviso. Dos salidas, hay que elegir una:
+
+- Hacerla **obligatoria** en el schema, con la misma red de seguridad que
+  ya tiene `herramientas`. Es lo recomendado: si la función va a ser un
+  eje de navegación, no puede ser opcional.
+- Que el filtro trate el caso, con una casilla "Sin función declarada".
+  Honesto, pero le agrega ruido al control.
+
+**2. `categoria` y `funcion` se solapan.** Mira lo que declaran los tres
+labs de hoy:
+
+| Lab | categoría | función |
+| --- | --- | --- |
+| hardening | infraestructura | proteger, identificar |
+| powershell | **detección** | **detectar** |
+| volatility | análisis | responder |
+
+`deteccion` y `detectar` son el mismo concepto escrito dos veces;
+`analisis`↔`responder` e `infraestructura`↔`proteger` van casi siempre
+juntos. Dos facetas correlacionadas le dan al lector la ilusión de dos
+controles independientes cuando la mayoría de las combinaciones está
+vacía: "categoría=detección Y función=proteger" da cero casi siempre, y
+no porque falten labs.
+
+**Por eso el filtro arranca solo con FUNCIÓN.** `categoria` se evalúa
+recién cuando haya labs suficientes para ver si aporta o duplica. Si al
+cruzarlas casi todas las celdas quedan vacías, la respuesta correcta no
+es tocar la interfaz: es que sobra un eje.
+
+### La lógica es CUALQUIERA (unión), no TODAS (intersección)
+
+Marcar `proteger` + `identificar` devuelve los labs que tengan **al menos
+una** de las dos.
+
+Modelado con 20 labs y 20.000 catálogos, extrapolando la distribución de
+los tres `.md` de hoy (**promedio real: 1,33 funciones por lab**):
+
+| Selección | CUALQUIERA | TODAS | TODAS da cero |
+| --- | --- | --- | --- |
+| 1 función | idénticas | idénticas | — |
+| 2 funciones | 10,6 labs | **1,0 labs** | **42%** de los pares |
+| 3 funciones | 14,5 labs | **0,10 labs** | **90%** |
+
+Las dos fallan, pero fallan distinto. CUALQUIERA falla por **poco
+selectiva** (dos casillas devuelven media biblioteca) y el lector desmarca
+una. TODAS falla por **callejón sin salida**: la lista se vacía y no hay
+forma de saber si es que no tienes labs de eso o si entendiste mal el
+control.
+
+La causa de fondo no es la interfaz, es el campo. `funcion` es
+multivaluado en el schema pero **casi monovaluado en la práctica**: 1,33
+de 5 posibles. La intersección tiene sentido cuando cada elemento carga
+muchos valores; sobre un campo que casi siempre trae uno, TODAS no es un
+filtro más estricto, es una **máquina de generar consultas imposibles**.
+Un lab que declara solo `detectar` no puede satisfacer "detectar Y
+proteger" ni en principio.
+
+Y hay un dato que lo cierra para `categoria`: es un `z.enum`, **un valor
+por lab**. Sobre categoría, TODAS con dos marcadas devuelve **siempre**
+cero. Aunque cambiaras de opinión para función, categoría tiene que ir en
+CUALQUIERA igual.
+
+### Contadores por casilla
+
+Cada casilla muestra cuántos resultados daría. No es adorno: es lo que
+hace que marcar no sea a ciegas y lo que vuelve visible el solapamiento
+entre categoría y función en vez de convertirlo en trampa.
+
+**El detalle que hace que sirvan:** el número de una casilla se calcula
+aplicando **los otros** grupos de filtros pero **no el propio**. Si no,
+marcar `detectar` pone en cero a las otras cuatro de su mismo grupo y el
+filtro se vuelve monoselección de hecho. Es la regla estándar de facetas
+y es fácil implementarla mal.
+
+### Las cinco funciones se muestran siempre
+
+**Nunca `disabled`.** Un `<input disabled>` sale del orden de tabulación:
+quien navegue con teclado o lector de pantalla pasa de largo sin enterarse
+de que existe. Eso contradice justamente lo que se busca, que se vea que
+el eje tiene cinco valores aunque haya labs en tres.
+
+Las que no tienen labs van con **contador en cero**, atenuadas a
+`--texto-suave` pero pulsables. Con el contador visible, un cero no es
+una trampa: dice "este eje existe, todavía no lo trabajé", que en un
+portafolio hasta juega a favor.
+
+### Semántica y teclado
+
+`<fieldset>` + `<legend>` para agrupar, y casillas nativas:
+
+```html
+<fieldset>
+  <legend class="titulo-seccion">Función (NIST CSF)</legend>
+  <input type="checkbox" id="f-detectar" value="detectar">
+  <label for="f-detectar">Detectar <span>(9)</span></label>
+  …
+</fieldset>
+```
+
+- El `<legend>` hace que el lector de pantalla anuncie "Función, Detectar,
+  casilla, no marcada": nunca se pierde de qué grupo es.
+- Tab entre casillas y Espacio para marcar los da el navegador. Sin JS.
+- **No con `<button aria-pressed>`.** Se ve igual, pierde la semántica de
+  "una de un grupo de opciones" y exige JS para funcionar.
+- Para que parezcan chips **estila el `<input>` con `appearance: none`**,
+  no lo escondas: con `display: none` sale del orden de tabulación.
+- El anillo de foco necesita 3:1 contra lo que tenga al lado, y `--acento`
+  cambia entre modos: hay que medirlo en los dos.
+
+### La base es CSS, el JavaScript va encima
+
+Con `:has()` el filtro funciona **entero sin una línea de JS**: mientras no
+haya nada marcado se ve todo; en cuanto hay algo marcado se oculta todo y
+cada casilla marcada vuelve a mostrar lo suyo.
+
+```css
+.filtros:has(input:checked) ~ .lista .fila { display: none; }
+.filtros:has(#f-detectar:checked) ~ .lista .fila[data-funcion~="detectar"] { display: revert; }
+```
+
+Eso es CUALQUIERA nativo: cada casilla suma sus coincidencias.
+
+**El cruce entre grupos se resuelve anidando**, que es la parte que no es
+obvia. Envuelve cada tarjeta en un `<div class="fila" data-funcion="…">` y
+deja `data-categoria` en la `.tarjeta` de adentro: las reglas de función
+ocultan el envoltorio, las de categoría ocultan la tarjeta, y como
+`display: none` en el envoltorio esconde todo lo que lleva dentro, la
+tarjeta solo se ve si **pasa las dos**. O sea Y entre grupos y O dentro de
+cada grupo, la lógica correcta de facetas, en CSS puro.
+
+Los contadores tampoco necesitan JS: **los contadores de CSS saltan los
+elementos con `display: none`**, así que `counter-increment` sobre las
+tarjetas visibles más `content: counter(…)` da "N labs" en vivo.
+
+Lo que **sí** queda afuera sin JS:
+
+| | Sin JS | Con ~40 líneas |
+| --- | --- | --- |
+| Filtrar, Y entre grupos / O dentro | ✅ | ✅ |
+| Contador total | ✅ | ✅ |
+| Contador por casilla | ❌ | ✅ |
+| Estado vacío | ❌ | ✅ |
+| URL compartible | ❌ | ✅ |
+| Anuncio a lector de pantalla | ❌ | ✅ |
+
+**La fila que más pesa es la última**: sin JS, alguien con lector de
+pantalla marca una casilla y no escucha nada; tiene que ir a la lista a
+descubrir que cambió. Le funciona, pero a ciegas. Esa —y no la URL— es la
+razón concreta de poner la capa de JS encima. Se resuelve con un
+`<p role="status">7 labs</p>` arriba de la lista.
+
+### URL
+
+`?funcion=proteger,detectar` — coma, no repetición de clave. Y
+`history.replaceState`, **no `pushState`**: con `pushState` cada casilla
+que marca el lector se apila en el historial y para volver a la página
+anterior tiene que apretar Atrás siete veces.
+
+Límite a tener presente: el sitio es estático en GitHub Pages, no hay
+servidor que lea la query string, así que **la URL solo funciona si hay JS
+que la lea al cargar**. Un enlace compartido abierto sin JS muestra la
+lista completa. Es aceptable —se ve todo, no se ve un error— pero es la
+única capa que no degrada.
+
+### Estado vacío
+
+Que no sea `<p>Sin resultados</p>`:
+
+> **Ningún lab combina eso todavía.**
+> Estás filtrando por *Detección* y *Proteger*.
+> [Quitar los filtros]
+
+Nombra qué está marcado (el lector puede haber olvidado una casilla más
+arriba), ofrece la salida en un clic, y dice "todavía": es un portafolio
+que crece, no una búsqueda fallida.
+
+### Umbral: no se muestra hasta el sexto lab
+
+```
+{labs.length >= 6 && <Filtros … />}
+```
+
+Con un lab publicado, el bloque de filtros son 11 controles arriba de
+**una** tarjeta: el control pesa más que lo controlado y los contadores
+dirían `(0)` en casi todo, que es información honesta pero se lee como un
+sitio vacío. Seis es donde el eje más chico deja de ser trivial y la lista
+deja de leerse de un vistazo.
+
+### Herramientas y MITRE
+
+`herramientas` queda para los 5-6 labs. Con 20 labs y la lista de
+`taxonomia.ts`, ese grupo tendría demasiados valores con 1-2 labs cada
+uno; ahí el filtro que sirve es un buscador, no casillas.
+
+`mitre_attack` **parece un eje y no lo es**: es opcional y disperso (solo
+`deteccion` y `analisis` lo llevan, por la regla de esta guía), y
+"T1059.001" no se escanea. Es material para una **página de índice**
+(`/mitre`, la matriz con enlaces a los labs que la tocan), no para el
+mismo control.
+
+Y lo que de verdad falta a los 20 labs no es un tercer grupo de casillas
+sino un **buscador de texto** sobre título y resumen: resuelve más
+consultas reales y cuesta menos interfaz.
 
 ## Bloques de código
 
@@ -624,7 +1262,25 @@ variables `--shiki-dark` que `global.css` activa por media query.
   absoluta porque LinkedIn y compañía leen la etiqueta desde sus propios
   servidores, donde `/og.png` no significa nada.
 - `src/layouts/Lab.astro` arma la cabecera del lab y estila el HTML que sale
-  del Markdown con `:global()` acotado a `.prosa`.
+  del Markdown con `:global()` acotado a `.prosa`. También monta la rejilla
+  de dos columnas cuando el lab lleva tabla de contenidos, y lleva el
+  script que marca la sección actual.
+
+  **Los rótulos de la cabecera ("Herramientas", "MITRE ATT&CK",
+  "Función") son `<p class="titulo-seccion">`, NO encabezados.** Antes
+  eran `h2` y eso rompía dos cosas a la vez: no salen de `render()`, así
+  que la tabla de contenidos no podía listarlos, y quien navegara por
+  encabezados con lector de pantalla encontraba tres `h2` que el índice no
+  tenía. Como además van *antes* del primer `h2` del contenido, bajarlos a
+  `h3` habría dejado un salto `h1 → h3`, que es su propio problema.
+
+  Sacarlos del esquema de encabezados es lo correcto: el esquema describe
+  la estructura del contenido, que es exactamente lo que lista el índice.
+  **Ahora los `h2` del documento y los ítems del índice son los mismos
+  ocho**, y esa es la invariante que conviene no perder. La asociación
+  entre el rótulo y su lista de chips la sostiene un `aria-labelledby` en
+  el `<ul>`, así que el lector de pantalla sigue anunciando
+  "Herramientas, lista, 2 elementos".
 - `src/pages/404.astro` compila a `dist/404.html`, que GitHub Pages sirve
   solo ante cualquier URL equivocada. En dev se ve entrando a `/404`.
 - `src/pages/sobre-mi.astro` tiene **dos banderas que se evalúan en el build**:
@@ -650,13 +1306,25 @@ variables `--shiki-dark` que `global.css` activa por media query.
 ## Arquitectura
 
 - Astro 7, sin integraciones de framework instaladas. Prácticamente cero
-  JavaScript en el cliente: la única excepción es un `<script is:inline>` de
-  siete líneas en `sobre-mi.astro`, que arma el enlace `mailto:` del correo
-  en el navegador para no publicarlo en el HTML estático.
+  JavaScript en el cliente: **cero archivos `.js` emitidos**, cero
+  dependencias, y dos `<script is:inline>` que son todo lo que corre en el
+  navegador:
+  - `sobre-mi.astro` — arma el enlace `mailto:` del correo para no
+    publicarlo en el HTML estático.
+  - `Lab.astro` — marca la sección que se está leyendo en la tabla de
+    contenidos, con un `IntersectionObserver`. Es la única parte de la
+    barra que necesita JavaScript; el resto funciona sin él.
+
+  Los dos van en línea y no en un archivo aparte a propósito: son de
+  decenas de líneas, y una petición HTTP más pesaría más que el código.
 - `src/pages/` usa routing basado en archivos: cada archivo es una ruta.
   `labs/[...id].astro` es la ruta dinámica que genera una página por lab.
 - `src/lib/labs.ts` es el **único** punto de lectura de la colección. Ahí vive el
   filtrado de borradores y el orden por fecha; no duplicar esa lógica en las páginas.
+- `src/lib/toc.ts` decide si un lab lleva tabla de contenidos y cuáles
+  encabezados entran. Va aparte de `labs.ts` porque **no importa
+  `astro:content`**: es aritmética pura y así se puede verificar con
+  `node` sin levantar el sitio. Ver "Tabla de contenidos de un lab".
 - `src/content.config.ts` define la colección `labs` con la Content Layer API de
   Astro 5+ (`loader: glob(...)`), no la carpeta mágica de versiones viejas.
 - `src/styles/global.css` concentra los tokens de diseño arriba del archivo.
