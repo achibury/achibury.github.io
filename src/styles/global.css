@@ -90,10 +90,27 @@
      el mismo margen de los dos lados flota entre dos bloques y no se
      sabe a cuál pertenece. Con el margen de arriba varias veces mayor,
      el encabezado se despega de la sección anterior y se pega a su
-     propio contenido: ahí es donde se ve el corte de sección. */
-  --h2-arriba: var(--e-12);
+     propio contenido: ahí es donde se ve el corte de sección.
+
+     OJO CON CÓMO SE SUMAN ESTOS DOS NÚMEROS en el h2. El aire total
+     encima del TEXTO del h2 es --h2-arriba más --h2-aire-linea, pero
+     el que se ve como hueco vacío es solo --h2-arriba: el relleno cae
+     DEBAJO de la línea separadora, no encima.
+
+     Eso importa porque durante mucho tiempo el h2 y el h3 tuvieron el
+     mismo --e-12 de margen, o sea 48px de vacío los dos, y lo único
+     que distinguía un corte de sección de uno de subsección era una
+     línea a 1,23:1 que no se veía. El documento se leía como un bloque
+     continuo. Medido, no supuesto.
+
+     Por eso el h2 va ahora en 64 + 32 = 96px, contra los 48 del h3: la
+     diferencia es de 2x y se nota sin medirla. Más no conviene, porque
+     abajo del h2 hay 16px y a 96 la asimetría ya es 6:1; a 128 sería
+     8:1 y el encabezado empieza a flotar sin pertenecer a nada, que es
+     justo lo que este ritmo existe para evitar. */
+  --h2-arriba: var(--e-16);
   --h2-abajo: var(--e-4);
-  --h2-aire-linea: var(--e-6); /* entre la línea separadora y el texto */
+  --h2-aire-linea: var(--e-8); /* entre la línea separadora y el texto */
   --h3-arriba: var(--e-12);
   --h3-abajo: var(--e-2);
 

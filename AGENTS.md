@@ -120,8 +120,8 @@ Gestionar el servidor en background con `astro dev stop`, `astro dev status` y `
 
 ## NO TOCAR
 
-Once cosas que **parecen** redundantes o simplificables y no lo son. Cada
-una se ve como código que sobra, y en **los once casos** quitarla rompe
+Doce cosas que **parecen** redundantes o simplificables y no lo son. Cada
+una se ve como código que sobra, y en **los doce casos** quitarla rompe
 algo sin que el build se queje: el daño solo se ve mirando la página.
 
 ### 1. El selector `:is()` de `Lab.astro`
@@ -360,6 +360,33 @@ La página está pensada con **dos** bordes verticales, no tres:
 Cualquier cosa que saque un elemento del artículo de la columna 2 agrega
 un tercer borde y rompe eso. El build no dice nada.
 
+### 12. La línea del h2 usa `--chip-borde`, no `--borde`
+
+```css
+.prosa h2 { border-top: 1px solid var(--chip-borde); }
+```
+
+**Parece** una inconsistencia. Todas las demás líneas de 1px del sitio
+—la de la cabecera del lab, la de las tarjetas, el `hr`, el borde de las
+celdas de una tabla— usan `--borde`. Esta no, y lo primero que uno hace
+al "ordenar" es unificarla.
+
+**No.** Esa línea es la única señal propia que tiene un corte de sección,
+porque el hueco vacío encima de un h2 (64px) no se distingue de un
+vistazo del que tiene un h3 (48px). Con `--borde` la línea da **1,23:1 en
+claro y 1,72:1 en oscuro**: no se ve, y el corte se queda sin nada. Con
+`--chip-borde` son **2,02:1 y 3,09:1**.
+
+Es el mismo criterio que ya está escrito para los chips y para la pista
+del índice: un elemento que tiene que *leerse como elemento* necesita más
+contraste que uno que solo separa. Las demás líneas del sitio separan; esta
+anuncia.
+
+Y va en **1px, no 2**. En este diseño el 2px ya significa otra cosa: es el
+borde de los grupos de chips de la cabecera del lab. Engrosarla la
+convertiría en decoración en vez de estructura; si hace falta más
+presencia, la respuesta es el número de sección, no una línea más gorda.
+
 ## Convenciones
 
 - Todo el contenido visible en español
@@ -537,6 +564,42 @@ cuerpo) está en `Lab.astro`. Va al mismo tamaño que el cuerpo a propósito:
 a 18px competía con el h3 y el ojo lo leía como otro nivel de encabezado.
 Ver "NO TOCAR" punto 7 antes de tocarlo.
 
+### Una subsección se escribe con `###`, no con negrita
+
+Este es el error más fácil de cometer escribiendo, porque en el editor
+se ve bien: abrís un párrafo con una frase en negrita, seguís con la
+explicación, y parece que quedó separado.
+
+```markdown
+**El switch no tenía cliente SSH.** Acá estuvo el problema real…
+```
+
+**En la página no queda separado nada.** Ese párrafo no hereda ninguna
+de las señales del h3 —ni el peso, ni `--texto-medio`, ni la barra de
+acento, ni los 48px de aire arriba contra 8 abajo— así que tres bloques
+seguidos se leen como un solo muro. Y hay un segundo daño, menos
+visible: no sale de `render()`, así que no existe para el esquema de
+encabezados ni para quien navegue con lector de pantalla.
+
+La regla es simple: **si abre un bloque y funciona como título, es un
+`###`**; y un encabezado no lleva punto final.
+
+Lo que **sí** son usos legítimos de la negrita en un lab, y no hay que
+tocar:
+
+| Uso | Ejemplo | Por qué se queda |
+| --- | --- | --- |
+| Apertura de un blockquote | `> **Dos puertos abiertos.** Telnet…` | Es lo que pide la guía del bloque de hallazgo |
+| Entradilla de un ítem de lista | `- **Acceso físico.** Quien llegue…` | Convertirlo rompería la lista |
+| Énfasis dentro de una frase | `…se rechaza **antes** de pedir credenciales` | No abre nada, es énfasis |
+
+Para barrer un lab entero buscando el patrón, salteando los bloques de
+código:
+
+```
+awk '/^```/{d=!d;next} d{next} /^\*\*/{print NR"\t"$0}' archivo.md
+```
+
 ### Credenciales y hashes van como `<REDACTADO>`
 
 Cualquier hash de contraseña o secreto que aparezca en la salida de un
@@ -641,7 +704,7 @@ deja reconocer el nivel de un vistazo.
 
 | Nivel | Tamaño | Peso | Color | Señal propia |
 | --- | --- | --- | --- | --- |
-| h2 | 28px | 650 | `--texto` | línea separadora arriba |
+| h2 | 28px | 650 | `--texto` | número de sección + línea separadora arriba |
 | h3 | 21px | 550 | `--texto-medio` | barra de acento a la izquierda |
 | cuerpo | 16px | 400 | `--texto` | — |
 
@@ -693,22 +756,97 @@ Variables: `--h2-arriba`, `--h2-abajo`, `--h2-aire-linea`, `--h3-arriba`,
 `--h3-abajo`, y dos casos especiales para encabezados consecutivos,
 `--h3-tras-h2` y `--h3-tras-h3`.
 
-Resultado: h2 con 72px arriba contra 16px abajo (4.5:1); h3 con 48px contra
+Resultado: h2 con 96px arriba contra 16px abajo (6:1); h3 con 48px contra
 8px (6:1). Un h2 después de cualquier cosa conserva siempre su tratamiento
 completo, porque siempre es un corte mayor.
+
+**Los 96px del h2 no son todos hueco vacío, y la diferencia importa.** Son
+64 de margen más 32 de relleno, y el relleno cae *debajo* de la línea
+separadora. O sea que lo que el ojo ve como vacío antes de encontrar
+cualquier señal son 64px, no 96.
+
+Eso es lo que estuvo roto durante un tiempo: el h2 y el h3 tenían los dos
+`--e-12`, o sea **48px de vacío idénticos**, y lo único que distinguía un
+corte de sección de uno de subsección era una línea a 1,23:1 que no se veía.
+El lab se leía como un bloque continuo, y no era una impresión: estaba
+medido. Ver "Separación de secciones en un lab".
+
+### Separación de secciones en un lab
+
+Tres señales trabajando juntas encima de cada `h2`, y las tres hacen falta:
+
+| Señal | Qué aporta |
+| --- | --- |
+| 64px de vacío, luego la línea, luego 32px | El corte se anticipa antes de leer nada |
+| Línea de 1px en `--chip-borde` | 2,02:1 en claro y 3,09:1 en oscuro |
+| Número de sección `01`…`08` en acento | La marca que engancha el ojo al hacer scroll |
+
+**El aire solo no alcanza, y esta es la razón para no seguir subiéndolo.** El
+h3 ya se lleva 48px, así que agrandar el del h2 cambia una proporción pero
+nunca crea una diferencia de categoría. Y a 96px la asimetría contra los
+16px de abajo ya es 6:1; a 128 sería 8:1 y el encabezado empezaría a flotar
+sin pertenecer a nada, que es justo lo que el ritmo asimétrico existe para
+evitar.
+
+**El número sale de un contador CSS**, así que el Markdown no lleva ningún
+número escrito a mano y reordenar secciones renumera solo:
+
+```css
+.lab--con-toc .prosa { counter-reset: seccion; }
+.lab--con-toc .prosa h2::before {
+  counter-increment: seccion;
+  content: counter(seccion, decimal-leading-zero);
+}
+```
+
+Cuatro cosas que no son obvias:
+
+- **Va encima del título, no colgando en el canalón** como el marcador del
+  h3. No es estética: "01" mide 16px a 12px de cuerpo y colgarlo a la
+  izquierda necesitaría 28px de canalón; en móvil el canalón es el relleno
+  del contenedor, que son **24px**. No cabe.
+- **Solo en labs largos**, por eso cuelga de `.lab--con-toc`. Es el mismo
+  umbral que decide la tabla de contenidos y por el mismo motivo: numerar
+  seis secciones que entran en tres pantallas es decoración, no
+  orientación. Los dos auxiliares de navegación aparecen y desaparecen
+  juntos.
+- **El número NO entra en el nombre accesible del encabezado.** Comprobado
+  leyendo el árbol de accesibilidad de Chrome: el `h2` se sigue llamando
+  `"Contexto"` y no `"01 Contexto"`, así que el texto del encabezado y el
+  del ítem del índice siguen siendo el mismo. Si algún navegador lo
+  incluyera, la salida es `content: counter(…) / ""`.
+- **`decimal-leading-zero` y no `decimal`**: dos dígitos siempre, así la
+  columna de números no se corre entre la sección 9 y la 10.
+
+**Se descartó una banda de fondo detrás del h2**, que era la opción más
+contundente de las tres que se probaron. Motivo medido: con `--superficie`
+la banda queda a **1,00:1 del fondo de un bloque de código** en modo oscuro
+y 1,05:1 en claro, o sea indistinguible. En un lab con 18 bloques de
+código, el lector aprende que "rectángulo con fondo" significa código y
+después se encuentra con que a veces es un título. Es peor que no tener
+señal: es una señal que miente. Arreglarlo pediría un cuarto tono de
+superficie, y el diseño tiene tres.
 
 Espaciado general: escala `--e-1` … `--e-24`. Usar siempre esas variables en
 vez de píxeles sueltos.
 
 ### Color
 
-Paleta gris pizarra con **un** color de acento (teal), usado con moderación:
-enlaces, la píldora de categoría, el marcador del h3 y la barra del ítem
-activo de la tabla de contenidos. Nada más.
+Paleta gris pizarra con **un** color de acento (teal), usado con moderación.
+Son cinco usos y ninguno es decorativo:
 
-Los dos últimos son el mismo signo para lo mismo — "estás acá" — y por eso
-se dibujan igual: una barra angosta de acento al costado izquierdo. Si
-agregas un quinto uso, que sea por la misma razón.
+| Uso | Qué marca |
+| --- | --- |
+| Enlaces | Acción |
+| Píldora de categoría | Clasificación |
+| Marcador del h3 | Posición estructural |
+| Barra del ítem activo del índice | Posición estructural |
+| Número de sección del h2 | Posición estructural |
+
+Los tres últimos son el mismo signo para lo mismo — "estás acá" o "acá
+empieza algo" — y por eso los dos primeros se dibujan igual, una barra
+angosta al costado izquierdo. Si agregas un sexto uso, que sea por la
+misma razón: acento chico que marca estructura, nunca adorno.
 
 Modo oscuro **solo** por `prefers-color-scheme`, sin botón de cambio manual.
 Es deliberado: menos piezas que mantener, y ningún JavaScript ni estado que

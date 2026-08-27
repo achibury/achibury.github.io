@@ -545,12 +545,82 @@ const datosEstructurados = {
      pintado hasta navegar a otra ancla, y el aria-current de la barra
      ya dice donde estas de una forma que SI se actualiza. */
 
+  /* La linea separadora usa --chip-borde, NO --borde.
+
+     Con --borde daba 1,23:1 en claro y 1,72:1 en oscuro: no se veia, y
+     como el hueco vacio encima del h2 era el mismo que encima del h3
+     (48px los dos), el corte de seccion se quedaba sin ninguna señal
+     propia. Con --chip-borde son 2,02:1 y 3,09:1: se lee como regla
+     sin convertirse en tinta.
+
+     Y va en 1px, no en 2. En este diseño el 2px ya significa otra
+     cosa: es el borde de los grupos de chips de la cabecera. Engrosar
+     esta linea la convertiria en elemento decorativo en vez de
+     estructura. Si hiciera falta mas presencia, la respuesta es el
+     numero de seccion de mas abajo, no una linea mas gorda. */
   .prosa :global(h2) {
     margin-top: var(--h2-arriba);
     margin-bottom: var(--h2-abajo);
     padding-top: var(--h2-aire-linea);
-    border-top: 1px solid var(--borde);
+    border-top: 1px solid var(--chip-borde);
     color: var(--texto);
+  }
+
+  /* ======================================================================
+     NUMERO DE SECCION
+
+     Un 01..08 en acento encima de cada h2. Sale de un contador CSS, asi
+     que el Markdown no lleva ningun numero escrito a mano y renumerar
+     al reordenar secciones es automatico.
+
+     POR QUE UN NUMERO Y NO MAS AIRE. El aire y la linea son la misma
+     clase de señal que usa el resto de la pagina, y el h3 ya se lleva
+     48px. El numero es lo unico que no aparece en ningun otro lugar
+     del cuerpo del lab: una marca de color con forma de numeral. Es lo
+     que engancha el ojo yendo rapido, y de paso dice cuantas secciones
+     quedan sin tener que mirar el indice.
+
+     VA ENCIMA DEL TITULO, no colgando en el canalon como el marcador
+     del h3. No es estetica: "01" mide 16px a 12px de cuerpo y colgarlo
+     a la izquierda necesitaria 28px de canalon; en movil el canalon es
+     el relleno del contenedor, que son 24px. No cabe.
+
+     SOLO EN LABS LARGOS, por eso cuelga de .lab--con-toc. Es el mismo
+     umbral que decide la tabla de contenidos, y por el mismo motivo:
+     numerar seis secciones que entran en tres pantallas es decoracion,
+     no orientacion. Los dos auxiliares de navegacion aparecen y
+     desaparecen juntos.
+
+     El acento en el numero es su QUINTO uso en el sitio, y esta dentro
+     de la regla de moderacion: cae en la misma familia que el marcador
+     del h3 y la barra del indice activo, acento chico que marca
+     posicion estructural. Nunca decoracion.
+
+     Comprobado en el arbol de accesibilidad de Chrome: el contenido
+     generado NO entra en el nombre del encabezado. El h2 se sigue
+     llamando "Contexto" y no "01 Contexto", asi que el texto del
+     encabezado y el del indice siguen siendo el mismo. Si algun
+     navegador lo incluyera, la red de seguridad es una linea:
+     content: counter(...) / "" deja el texto alternativo vacio.
+     ====================================================================== */
+  .lab--con-toc .prosa {
+    counter-reset: seccion;
+  }
+
+  .lab--con-toc .prosa :global(h2)::before {
+    counter-increment: seccion;
+    /* decimal-leading-zero da 01 y no 1: dos digitos siempre, asi la
+       columna de numeros no baila entre la seccion 9 y la 10. */
+    content: counter(seccion, decimal-leading-zero);
+    display: block;
+    margin-bottom: var(--e-2);
+    font-size: var(--t-xs);
+    font-weight: 700;
+    /* Pisa el letter-spacing negativo que traen h1, h2 y h3 de
+       global.css, que en un numeral chico lo unico que hace es
+       apretarlo. */
+    letter-spacing: 0.08em;
+    color: var(--acento);
   }
 
   /* El primer encabezado no necesita separarse de nada: viene justo

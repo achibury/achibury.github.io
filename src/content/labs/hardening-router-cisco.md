@@ -95,7 +95,7 @@ Desde el switch, en la zona de usuarios, un simple `show cdp neighbors detail` e
 
 Un detalle del laboratorio: la plataforma aparece como `Linux Unix` porque IOL corre IOS sobre Linux. En un equipo físico ahí saldría el modelo real, así que la fuga sería peor.
 
-**Hallazgos de la línea base:**
+### Hallazgos de la línea base
 
 | # | Hallazgo | Riesgo |
 |---|---|---|
@@ -141,7 +141,7 @@ Antes de escribir un comando definí qué iba a aplicar y por qué. Once control
 
 Todo desde la consola de PNETLab, nunca por Telnet. A mitad de la configuración se corta el acceso remoto, así que trabajar desde la sesión que vas a matar es garantía de quedarte afuera.
 
-### Base para SSH y credenciales:
+### Base para SSH y credenciales
 
 ```
 ip domain-name lab.local
@@ -153,7 +153,7 @@ service password-encryption
 no enable password
 ```
 
-### Restricción de origen:
+### Restricción de origen
 
 ```
 ip access-list standard GESTION-PERMITIDA
@@ -163,7 +163,7 @@ ip access-list standard GESTION-PERMITIDA
 
 El `log` en el `deny` es lo que después deja rastro del intento bloqueado. Sin eso la ACL funciona igual, pero no te enteras de que alguien lo intentó.
 
-### Líneas de acceso:
+### Líneas de acceso
 
 ```
 line vty 0 4
@@ -178,7 +178,7 @@ line con 0
  logging synchronous
 ```
 
-### SSH y freno a la fuerza bruta:
+### SSH y freno a la fuerza bruta
 
 ```
 ip ssh version 2
@@ -190,7 +190,7 @@ login on-failure log
 login on-success log
 ```
 
-### Banner:
+### Banner
 
 ```
 banner login ^
@@ -201,7 +201,7 @@ constituir delito segun la Ley 21.459 sobre delitos informaticos.
 ^
 ```
 
-### Servicios, CDP, logging e interfaces:
+### Servicios, CDP, logging e interfaces
 
 ```
 no ip http server
@@ -279,11 +279,17 @@ Vale precisar qué prueba esto exactamente: la conexión se rechaza en la línea
 
 ## Lo que se me rompió
 
-**El Ubuntu venía con una sola interfaz.** La ocupé conectándolo al router y después me di cuenta de que necesitaba una segunda para llegar a internet e instalar `nmap`. Se resuelve editando el nodo en la topología y agregando interfaces Ethernet, pero hay que hacerlo antes de arrancar la máquina.
+### El Ubuntu venía con una sola interfaz
 
-**No pude usar la consola del Ubuntu cómodamente.** Terminé conectándome por SSH desde mi equipo Windows. Funciona bien y de paso es más parecido a cómo se trabaja de verdad, pero perdí un rato buscando por qué la consola integrada no me servía.
+La ocupé conectándolo al router y después me di cuenta de que necesitaba una segunda para llegar a internet e instalar `nmap`. Se resuelve editando el nodo en la topología y agregando interfaces Ethernet, pero hay que hacerlo antes de arrancar la máquina.
 
-**El switch no tenía cliente SSH.** Acá estuvo el problema real. Mi imagen IOL de switch L2 es non-k9, o sea sin paquete criptográfico: no puede generar claves RSA ni establecer sesiones SSH. Eso rompía la prueba de la ACL, que era justamente comprobar que un equipo de la zona de usuarios no puede administrar el router.
+### No pude usar la consola del Ubuntu cómodamente
+
+Terminé conectándome por SSH desde mi equipo Windows. Funciona bien y de paso es más parecido a cómo se trabaja de verdad, pero perdí un rato buscando por qué la consola integrada no me servía.
+
+### El switch no tenía cliente SSH
+
+Acá estuvo el problema real. Mi imagen IOL de switch L2 es non-k9, o sea sin paquete criptográfico: no puede generar claves RSA ni establecer sesiones SSH. Eso rompía la prueba de la ACL, que era justamente comprobar que un equipo de la zona de usuarios no puede administrar el router.
 
 La salida fue apuntar Telnet al puerto de SSH:
 
