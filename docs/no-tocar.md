@@ -1,4 +1,4 @@
-# Doce cosas que no se tocan
+# Trece cosas que no se tocan
 
 > Archivo de detalle de [`CLAUDE.md`](../CLAUDE.md) (que es el mismo
 > archivo que `AGENTS.md`).
@@ -6,15 +6,15 @@
 > **Léelo antes de:** editar cualquier CSS del sitio o `astro.config.mjs`.
 >
 > Este es el archivo de detalle más importante de todos, y por un motivo
-> concreto: en los doce casos el build **pasa igual** después de romperlo.
+> concreto: en los trece casos el build **pasa igual** después de romperlo.
 > No hay red de seguridad automática; la única red es leer el punto antes
-> de tocar. En `CLAUDE.md` está la lista de los doce títulos como alarma,
+> de tocar. En `CLAUDE.md` está la lista de los trece títulos como alarma,
 > pero el motivo, la medición y el "ya pasó una vez" están acá.
 
 ## NO TOCAR
 
-Doce cosas que **parecen** redundantes o simplificables y no lo son. Cada
-una se ve como código que sobra, y en **los doce casos** quitarla rompe
+Trece cosas que **parecen** redundantes o simplificables y no lo son. Cada
+una se ve como código que sobra, y en **los trece casos** quitarla rompe
 algo sin que el build se queje: el daño solo se ve mirando la página.
 
 ### 1. El selector `:is()` de `Lab.astro`
@@ -280,3 +280,38 @@ borde de los grupos de chips de la cabecera del lab. Engrosarla la
 convertiría en decoración en vez de estructura; si hace falta más
 presencia, la respuesta es el número de sección, no una línea más gorda.
 
+### 13. El relleno de 16px de la tabla de contenidos
+
+```css
+/* TablaContenidos.astro */
+.toc { padding: var(--e-3) var(--e-4) var(--e-4); }   /* 16px a los lados */
+
+/* Lab.astro, dentro del @media de la rejilla */
+.lab--con-toc > :global(.toc) { overflow-y: auto; }
+```
+
+**Parece** que el relleno de la caja del índice es puro espaciado y se
+puede apretar para ganar ancho de texto.
+
+**No: es lo que evita que se recorte el anillo de foco.** La barra lleva
+`overflow-y: auto` como red de seguridad para un lab con muchas
+secciones, y en CSS declarar un eje como no visible **convierte también
+el otro en recortable** — `overflow-x: visible` computa a `auto`. O sea
+que la caja recorta a sus hijos en horizontal aunque nadie lo pidiera.
+
+El `:focus-visible` global dibuja el anillo a `outline-offset: 3px`, o
+sea 3px **por fuera** del enlace. Esos 3px caen dentro de los 16px de
+relleno, así que hoy el anillo se ve entero. Con el relleno en 8px
+seguiría entrando; en 0 o en 2px, el anillo del ítem enfocado se corta
+contra el borde de la caja y quien navega con teclado pierde la única
+señal de dónde está parado.
+
+**El anillo se queda en +3px y NO se baja a −2px** como el de los
+controles de contacto de `/sobre-mi`. Ahí el desplazamiento negativo
+hace falta porque el contenedor tiene `overflow: hidden` de verdad y no
+hay relleno que absorba nada; acá sí lo hay, y un anillo distinto al del
+resto del sitio sería una inconsistencia sin motivo.
+
+Es de manual para esta lista: parece espaciado cambiable, no lo es, y el
+build no dice absolutamente nada. Ver "Tabla de contenidos de un lab"
+(`docs/tabla-de-contenidos.md`).

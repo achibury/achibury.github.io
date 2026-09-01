@@ -35,25 +35,16 @@ página, su enlace en el menú del header y las referencias de este
 archivo. El sitemap no necesitó tocarse — se arma leyendo `dist/`, así
 que la URL desapareció sola.
 
-En `src/content/labs/` hay **otros cuatro `.md`**, todos con
-`borrador: true`, todos **fuera de producción** y ninguno genera página.
-Si el conteo de páginas no te cuadra, esa es la razón; no está roto. Son
-dos cosas distintas:
-
-- **Ejemplo ficticio** — el de PowerShell/Sigma y el de Volatility. Se
-  conservan como referencia de formato: así se ve un lab terminado.
-- **Andamiaje, prefijo `andamiaje-`** — dos archivos con el título en
-  mayúsculas que dice que son de prueba. No describen ningún trabajo:
-  existen para que en `npm run dev` haya cinco labs y se pueda mirar cómo
-  se comportan la home y `/labs` con más de tres, y para disparar el tope
-  de cuatro herramientas de la tarjeta con su indicador `+N`. Son
-  **temporales**: se borran de una cuando termine la V2, con
-  `rm src/content/labs/andamiaje-*.md`. El prefijo existe para eso, así
-  que si agregas andamiaje nuevo, respétalo.
+En `src/content/labs/` hay **otros dos `.md`**, los dos con
+`borrador: true`, los dos **fuera de producción** y ninguno genera
+página: el de PowerShell/Sigma y el de Volatility. Son **contenido de
+ejemplo ficticio** y se conservan como referencia de formato — así se ve
+un lab terminado. Si el conteo de páginas no te cuadra, esa es la razón;
+no está roto.
 
 Los labs largos llevan **tabla de contenidos**: barra a la derecha en
 escritorio, desplegable en móvil. Se enciende sola según el largo del
-lab, así que hoy la tiene el de hardening y ninguno de los cuatro
+lab, así que hoy la tiene el de hardening y ninguno de los dos
 borradores. Ver "Tabla de contenidos de un lab" (`docs/tabla-de-contenidos.md`).
 
 ## Pendientes
@@ -65,28 +56,52 @@ Cosas abiertas a hoy, verificadas contra el código:
   botón roto. Se activa sola al dejar el PDF ahí.
 - **`hayCertificaciones` está en `false`** en `sobre-mi.astro`, porque
   todavía no hay ninguna. El markup ya está escrito esperando.
-- ~~**V2 — el header envuelve en dos filas a 360px.**~~ **RESUELTO** al
-  borrar `/herramientas`, sin tocar el header. Vuelto a medir con las
+- ~~**V2 — el header envuelve en dos filas a 360px.**~~ **RESUELTO**, y
+  sin tocar el header: lo arregló borrar `/herramientas`. Medido con las
   métricas reales de Segoe UI a 14px en peso 600, que es el del menú:
 
-  | | Antes (3 enlaces) | Ahora (2 enlaces) |
+  | | Antes (`Labs` · `Herramientas` · `Sobre mí`) | Ahora (`Labs` · `Sobre mí`) |
   | --- | --- | --- |
-  | Menú | 211px | **105px** |
-  | Header entero (logo 40 + hueco 32 + menú) | 283px | **177px** |
-  | Holgura sobre los 312px disponibles | 29px | **135px** |
+  | Menú | 210,91px | **105,45px** |
+  | Header entero (logo 40 + hueco 32 + menú) | 282,91px | **177,45px** |
+  | Holgura sobre los 312px disponibles | 29,09px | **134,55px** |
 
-  Los 312px salen de 360 menos 24 de relleno por lado. El menú de antes
-  eran `Labs` 29 + `Herramientas` 85 + `Sobre mí` 57 más dos huecos de
-  20; ahora es `Labs` + `Sobre mí` más un hueco.
+  Los 312px salen de 360 menos 24 de relleno por lado. Anchos medidos de
+  cada enlace: `Labs` 28,62 · `Sobre mí` 56,82 · `Herramientas` 85,46
+  (el que se fue), más 20px de hueco entre enlaces.
 
-  Lo que estaba anotado no era que el header se rompiera hoy — entraba
-  en una fila por 29px — sino que **el margen era tan fino que cualquier
-  enlace nuevo lo rompía**. Ese riesgo se fue: con 135px de holgura, un
+  Lo que estaba anotado no era que el header se rompiera — entraba en
+  una fila por 29px — sino que **el margen era tan fino que cualquier
+  enlace nuevo lo rompía**. Con 134,55px de holgura ese riesgo se fue: un
   enlace nuevo tendría que medir más de 115px de texto para volver a
-  partir el header, y `Herramientas`, que era el más largo del menú,
-  medía 85px. Con dos enlaces nuevos vuelve a apretar, así que si el
-  menú crece, hay que volver a medir. El menú colapsable **deja de ser
-  necesario** para este problema.
+  partirlo, y `Herramientas`, el más largo que hubo, medía 85. El menú
+  colapsable **deja de ser necesario** para este problema.
+
+  **Hubo un tercer enlace, `Contacto`, y se revirtió. No lo repongas.**
+  Llegó a estar apuntando a `/sobre-mi/#contacto` y el menú medía 182,96px
+  con 57,04px de holgura, o sea que **entraba de sobra**: no se quitó por
+  ancho, así que no busques acá el motivo. Está en Pendientes, en
+  "encontrar el contacto".
+
+- **Nadie encuentra el contacto, y las dos salidas obvias ya fallaron.**
+  El bloque de correo + LinkedIn vive al final de `/sobre-mi`, que es una
+  página que hay que buscar y después bajar entera. Se intentaron dos
+  cosas y **las dos se descartaron después de verlas montadas**:
+
+  1. **Un enlace `Contacto` en el menú del header**, apuntando a
+     `/sobre-mi/#contacto`. Entraba de sobra en el ancho (57px de
+     holgura a 360px), pero la etiqueta y el destino no coincidían:
+     decías "Contacto" y caías en una página titulada "Sobre mí", con el
+     menú marcando "Sobre mí" como la sección activa.
+  2. **Mover el bloque entero al pie de página**, que sale en las 5.
+     Aligerado para no competir con el contenido (sin marco, subrayado
+     como señal), quedó tan discreto que se volvió invisible.
+
+  Queda el ancla `id="contacto"` en la sección, que no molesta y sirve
+  para enlazar directo. **El problema sigue abierto**: no hay una tercera
+  idea decidida. Lo que ya se sabe es que no se resuelve ni con una
+  etiqueta en el menú que mienta sobre su destino, ni haciendo el bloque
+  más discreto.
 
 - **El filtro de `/labs` está decidido pero NO construido, y su análisis
   salió de este archivo.** Eran 216 líneas describiendo algo que no
@@ -186,8 +201,8 @@ Fuera del índice, a propósito: `notas/filtros-labs.md` — ver Pendientes.
 
 ## NO TOCAR — la lista
 
-Doce cosas que **parecen** redundantes o simplificables y no lo son. En
-los doce casos quitarlas rompe algo **sin que el build se queje**: el
+Trece cosas que **parecen** redundantes o simplificables y no lo son. En
+los trece casos quitarlas rompe algo **sin que el build se queje**: el
 daño solo se ve mirando la página.
 
 Acá están solo los títulos, como alarma. El motivo, la medición y el "ya
@@ -206,6 +221,7 @@ el punto entero antes de tocar lo que nombra.
 10. El `rootMargin` gigante del scroll-spy
 11. La cabecera del lab NO cruza las dos columnas
 12. La línea del h2 usa `--chip-borde`, no `--borde`
+13. El relleno de 16px de la tabla de contenidos
 
 ## Convenciones
 
@@ -223,13 +239,17 @@ el punto entero antes de tocar lo que nombra.
   dependencias, y dos `<script is:inline>` que son todo lo que corre en el
   navegador:
   - `sobre-mi.astro` — arma el enlace `mailto:` del correo para no
-    publicarlo en el HTML estático.
+    publicarlo en el HTML estático, y destapa el botón de copiar. Va
+    **solo en esa página**: se probó moverlo al pie, o sea a las 5, y se
+    revirtió (ver Pendientes).
   - `Lab.astro` — marca la sección que se está leyendo en la tabla de
     contenidos, con un `IntersectionObserver`. Es la única parte de la
-    barra que necesita JavaScript; el resto funciona sin él.
+    barra que necesita JavaScript; el resto funciona sin él. Va solo en
+    las páginas de lab.
 
   Los dos van en línea y no en un archivo aparte a propósito: son de
-  decenas de líneas, y una petición HTTP más pesaría más que el código.
+  decenas de líneas, cada uno vive en una sola página, y una petición
+  HTTP más pesaría más que el código.
 - `src/pages/` usa routing basado en archivos: cada archivo es una ruta.
   `labs/[...id].astro` es la ruta dinámica que genera una página por lab.
 - `src/lib/labs.ts` es el **único** punto de lectura de la colección. Ahí vive el

@@ -22,7 +22,18 @@
      contra el fondo, muy por encima del mínimo 4.5:1. */
   --texto-medio: #334155;
   --texto-suave: #475569;
+  /* El acento. Verificado 5.47:1 contra el fondo de la pagina, por encima
+     del minimo 4.5:1 para texto. Lo usan los enlaces, la pildora de
+     categoria, el marcador del h3, la barra del indice y el numero de
+     seccion del h2.
+
+     El enlace con caja del encabezado de la home apoya su BORDE en este
+     mismo token, asi que el valor importa tambien como contraste de
+     contorno: 5.47:1 pasa de sobra el 3:1 que pide un control. Se probo
+     antes con --chip-borde y daba 2.02:1, por debajo de ese umbral. */
   --acento: #0f766e;
+  /* Texto --acento sobre este fondo: 5.08:1. Es el relleno de la pildora
+     de categoria y el del hover del enlace a /labs. */
   --acento-fondo: #e6fbf6;
 
   /* Fondo del bloque de hallazgo (el blockquote de un lab). Tinte de
@@ -202,7 +213,9 @@
     --texto: #e2e8f0;
     --texto-medio: #b4c1d1; /* verificado 9.77:1 contra el fondo */
     --texto-suave: #94a3b8;
+    /* Verificado 12.07:1 contra el fondo (texto y borde de enlace). */
     --acento: #5eead4;
+    /* Texto --acento sobre este fondo: 6.41:1. */
     --acento-fondo: #134e4a;
     --hallazgo-fondo: #1a3a37; /* texto --texto encima: 10.00:1 */
 
@@ -265,6 +278,48 @@ a {
 
 a:hover {
   text-decoration: none;
+}
+
+/* --- Saltar al contenido ---
+
+   El primer enfocable del documento. Quien navega con teclado o lector
+   de pantalla se come el header entero en CADA página antes de llegar al
+   contenido; con esto lo salta de una tabulación.
+
+   Se esconde con `position: absolute` fuera de la pantalla y NO con
+   `display: none` ni `visibility: hidden`: esas dos lo sacan del orden
+   de tabulación y el enlace no podría recibir el foco nunca, que es lo
+   único que lo hace aparecer.
+
+   Al enfocarse se dibuja ENCIMA del header (position: fixed y z-index),
+   no empujándolo: si ocupara espacio, toda la página daría un salto al
+   tabular, que es justo el tipo de movimiento que desorienta.
+
+   Usa `:focus` y no `:focus-visible` a propósito. Son equivalentes acá
+   —a este enlace solo se llega con el teclado— pero `:focus` no depende
+   de la heurística del navegador para decidir si el foco "se ve".
+
+   Colores ya existentes, sin tokens nuevos: --acento sobre --fondo son
+   5.47:1 en claro y 12.07:1 en oscuro, por encima del mínimo 4.5:1. */
+.saltar {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  padding: var(--e-2) var(--e-4);
+  border: 1px solid var(--acento);
+  border-radius: var(--radio);
+  background: var(--fondo);
+  color: var(--acento);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.saltar:focus {
+  position: fixed;
+  left: var(--e-4);
+  top: var(--e-4);
+  z-index: 100;
 }
 
 /* Marca visible del foco para navegación con teclado. Accesibilidad

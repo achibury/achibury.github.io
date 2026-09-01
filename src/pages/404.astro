@@ -21,7 +21,15 @@ import Base from '../layouts/Base.astro';
         Puede que el enlace esté mal escrito, o que la página haya cambiado
         de dirección.
       </p>
-      <p class="volver"><a href="/">Volver al inicio</a></p>
+      {/* Dos salidas, no una. /labs va junto al inicio porque es el
+          destino mas probable de un enlace roto: una URL de lab que
+          cambio de nombre cae justamente aca, y mandar al inicio obliga
+          a un salto extra. */}
+      <p class="volver">
+        <a href="/">Volver al inicio</a>
+        <span class="volver__separador" aria-hidden="true">·</span>
+        <a href="/labs/">Ver los labs</a>
+      </p>
     </section>
   </div>
 </Base>
@@ -40,5 +48,12 @@ import Base from '../layouts/Base.astro';
 
   .volver {
     margin-top: var(--e-8);
+  }
+
+  /* Decorativo: separa los dos enlaces sin agregar una palabra que el
+     lector de pantalla tenga que leer entre uno y otro. */
+  .volver__separador {
+    margin-inline: var(--e-2);
+    color: var(--texto-suave);
   }
 </style>

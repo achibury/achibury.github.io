@@ -114,14 +114,15 @@ function esActivo(href: string): boolean {
      NO lo bajes a --e-4 "para ganar espacio en movil". Esta medido con
      Segoe UI a 14px en peso 600: a 360px hay 312px disponibles (360
      menos 24 de relleno por lado) y el header ocupa 177 con este gap
-     (logo 40 + hueco 32 + menu 105), o sea 135px de holgura. Incluso
-     con 24 sobran 131. El ancho nunca fue la restriccion — yo mismo lo
-     aprete a 16 creyendo que si, y lo unico que consegui fue el
-     apretujamiento.
+     (logo 40 + hueco 32 + menu 105), o sea 135px de holgura. Incluso con
+     24 sobran 131. El ancho nunca fue la restriccion — yo mismo lo aprete
+     a 16 creyendo que si, y lo unico que consegui fue el apretujamiento.
 
-     Las cifras viejas de este comentario (281px y 31px de holgura) eran
-     de cuando el menu tenia tres enlaces. Al borrar herramientas el
-     menu paso de 211px a 105px. */
+     La medicion cambio tres veces: con los tres enlaces originales el
+     menu media 211px; al borrar la pagina de herramientas bajo a 105; al
+     agregar "Contacto" subio a 183, y al sacarlo volvio a 105. "Contacto"
+     se revirtio porque la etiqueta y el destino no coincidian, no por el
+     ancho: ver la nota del header en CLAUDE.md. */
   .encabezado__lista {
     list-style: none;
     display: flex;

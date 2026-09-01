@@ -46,7 +46,11 @@ const { labs: labsHome, total, hayMas } = await getLabsHome();
         {
           hayMas && (
             <a class="ver-mas" href="/labs/">
-              Ver los {total} labs →
+              Ver los {total} labs
+              {/* La flecha sale del nombre accesible: es decoración, y
+                  leída en voz alta ("flecha a la derecha") no aporta
+                  nada al destino. El enlace se anuncia "Ver los 5 labs". */}
+              <span class="ver-mas__flecha" aria-hidden="true">→</span>
             </a>
           )
         }
@@ -92,7 +96,17 @@ const { labs: labsHome, total, hayMas } = await getLabsHome();
   .seccion__cabecera {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    /* CENTER, no BASELINE.
+
+       Con el enlace en texto pelado, `baseline` era lo correcto: dos
+       textos de cuerpos distintos se alinean por la línea sobre la que
+       se apoyan las letras, no por el centro de sus cajas.
+
+       Desde que el enlace tiene caja (borde y relleno) deja de valer:
+       `baseline` alinea la base del TEXTO de adentro, así que el borde
+       de arriba y el de abajo quedan descolgados respecto del rótulo y
+       la caja se ve hundida. Con `center` se alinean las dos cajas. */
+    align-items: center;
     justify-content: space-between;
     gap: var(--e-2) var(--e-4);
     margin-bottom: var(--e-6);
@@ -102,13 +116,77 @@ const { labs: labsHome, total, hayMas } = await getLabsHome();
     margin-bottom: 0;
   }
 
-  /* Va en --t-xs, el mismo cuerpo del rótulo, y no en --t-sm: al lado de
+  /* --- El enlace a /labs ---
+
+     Va en --t-xs, el mismo cuerpo del rótulo, y no en --t-sm: al lado de
      un rótulo de 12px, un enlace de 14px en color de acento pesa más que
      el título de la sección y la jerarquía se da vuelta. Acá tiene que
-     leerse como un par del rótulo, no como su encabezado. */
+     leerse como un par del rótulo, no como su encabezado.
+
+     LA CAJA Y LA QUITA DEL SUBRAYADO VAN JUNTAS, en la misma regla y en
+     el mismo cambio. El subrayado era la única señal de que esto era
+     interactivo; sacarlo sin poner otra cosa en su lugar deja un texto
+     que no se distingue de un rótulo. Si algún día se quita el borde,
+     hay que devolver el subrayado en el mismo movimiento.
+
+     Reproduce la caja de `.etiqueta` en vez de inventar una medida:
+     12px de texto con interlineado 1.5 (18) + 8 de relleno + 2 de borde
+     = 28px de alto, exactamente lo que miden los chips de herramientas
+     de las tarjetas de abajo. Así la fila del encabezado y las tarjetas
+     hablan el mismo idioma.
+
+     EL BORDE VA EN --acento Y NO EN --chip-borde, que era lo primero que
+     probé por reutilizar el lenguaje de los chips. Medido contra el
+     fondo de la página: --chip-borde da 2.02:1 en claro, por debajo del
+     3:1 que pide el contorno de un control, y el borde es justamente lo
+     que tiene que anunciar que esto se puede pulsar. --acento da 5.47:1
+     en claro y 12.07:1 en oscuro. No es un uso nuevo del acento: es el
+     de siempre, "enlace = acción", el primero de los cinco de la lista
+     del sistema de diseño.
+
+     Sin relleno sólido en reposo: un botón relleno acá competiría con
+     los títulos de los labs, que son el contenido de la sección. El
+     relleno aparece solo en hover, y en --acento-fondo, que es el mismo
+     tinte de la píldora de categoría. */
   .ver-mas {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--e-1);
+    padding: var(--e-1) var(--e-2);
+    border: 1px solid var(--acento);
+    border-radius: var(--radio);
     font-size: var(--t-xs);
+    line-height: 1.5;
     white-space: nowrap;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+  }
+
+  .ver-mas:hover {
+    background: var(--acento-fondo);
+  }
+
+  .ver-mas__flecha {
+    transition: transform 0.2s ease;
+  }
+
+  .ver-mas:hover .ver-mas__flecha {
+    transform: translateX(3px);
+  }
+
+  /* Quien pidió menos movimiento no recibe NADA de movimiento: no basta
+     con quitar la transición, porque eso deja el mismo desplazamiento
+     hecho de golpe. Se anula también el transform, así que el hover
+     queda solo en el cambio de fondo. */
+  @media (prefers-reduced-motion: reduce) {
+    .ver-mas,
+    .ver-mas__flecha {
+      transition: none;
+    }
+
+    .ver-mas:hover .ver-mas__flecha {
+      transform: none;
+    }
   }
 
 </style>

@@ -137,9 +137,14 @@ const urlImagenOG = new URL('/og.png', Astro.site);
   </head>
 
   <body>
+    {/* Primer elemento enfocable de la página: deja saltar el header y
+        caer directo en el contenido. Solo se ve al recibir el foco; con
+        el mouse no aparece nunca. Ver `.saltar` en global.css. */}
+    <a class="saltar" href="#contenido">Saltar al contenido</a>
+
     <div class="armazon">
       <Header />
-      <main>
+      <main id="contenido">
         <slot />
       </main>
       <Footer />

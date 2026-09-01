@@ -291,3 +291,35 @@ se gana nada; con veinte, ese archivo se cachea entre todos.
 
 **Sigue habiendo cero archivos `.js`**: el script va en línea.
 
+## El relleno de la caja sostiene el anillo de foco
+
+**No aprietes el `padding` de `.toc` para ganar ancho de texto.** Es
+`var(--e-3) var(--e-4) var(--e-4)`, o sea **16px a los lados**, y esos
+16px son lo que evita que se recorte el anillo de foco de un ítem.
+
+La cadena es esta, y ninguna de las tres piezas se ve sola:
+
+1. En escritorio, `Lab.astro` le pone a la barra `overflow-y: auto` como
+   red de seguridad para un lab con muchas secciones. Hoy no llega a
+   actuar nunca: con 8 ítems la barra mide 221px.
+2. Aunque solo se declare el eje vertical, **CSS convierte también el
+   horizontal en recortable**: un `overflow-x: visible` junto a un
+   `overflow-y` que no lo es computa a `auto`. La caja recorta a sus
+   hijos de lado a lado sin que nadie lo haya pedido.
+3. El `:focus-visible` global dibuja el anillo con `outline-offset: 3px`,
+   o sea 3px **por fuera** del enlace.
+
+Los 3px del anillo caen dentro de los 16px de relleno, así que se ve
+entero. Con 8px seguiría entrando; con 0 o 2px, el anillo del ítem
+enfocado se corta contra el borde de la caja y quien navega con teclado
+pierde la única señal de dónde está parado.
+
+**El anillo se queda en +3px y no se baja a −2px** como el de los
+controles de contacto de `/sobre-mi`. Ahí el desplazamiento negativo es
+obligatorio porque
+el contenedor tiene `overflow: hidden` de verdad y no hay relleno que
+absorba nada; acá sí lo hay, y un anillo distinto al del resto del sitio
+sería una inconsistencia sin ganancia.
+
+Está en la lista NO TOCAR como punto 13 por eso: parece espaciado
+cambiable, no lo es, y el build no dice nada.

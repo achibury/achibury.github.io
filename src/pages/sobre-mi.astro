@@ -233,8 +233,13 @@ const datosEstructurados = {
       )
     }
 
-    {/* ================= CONTACTO ================= */}
-    <section class="seccion">
+    {/* ================= CONTACTO =================
+
+        El `id` es un ancla para poder enlazar directo a esta sección.
+        NO hay ningún enlace del menú apuntando acá: se probó y se
+        descartó, porque la etiqueta "Contacto" mandaba a una página
+        titulada "Sobre mí". Ver Pendientes en CLAUDE.md. */}
+    <section class="seccion" id="contacto">
       <h2 class="titulo-seccion">Contacto</h2>
 
       {/* LA DIRECCIÓN NO ESTÁ ACÁ, Y ESO ES EL PUNTO.
@@ -257,6 +262,29 @@ const datosEstructurados = {
 
           El <noscript> de más abajo es la salida cuando el script no
           corre; ver el comentario que lo acompaña. */}
+      {/* Sin JavaScript el botón de correo no se arma y quedaría sin
+          salida, así que acá va la dirección de respaldo.
+
+          VA ANTES DE LOS BOTONES, no después. Quien no tiene JavaScript
+          se encuentra primero con la salida que sí funciona, en vez de
+          toparse con un control apagado y tener que seguir bajando para
+          descubrir que había otra vía.
+
+          El navegador solo dibuja el contenido de un <noscript> cuando el
+          scripting está apagado, o sea que esto NO se ve en una visita
+          normal ni altera la disposición de la página. Y como el
+          recolector que renderiza sí ejecuta JavaScript, tampoco lo ve
+          él. Al que lee el HTML crudo le queda la misma cadena partida
+          que había antes: no se pierde nada, y solo en este camino. */}
+      <noscript>
+        <p class="contacto__respaldo">
+          El botón de correo se arma con JavaScript. Si lo tienes
+          desactivado, escríbeme a <span class="contacto__respaldo-dato"
+            >benjamin.achibury<span>&#64;</span>protonmail.com</span
+          >.
+        </p>
+      </noscript>
+
       <div class="contacto">
         {/* CONTROL DIVIDIDO: dos zonas, DOS CONTROLES.
 
@@ -269,8 +297,11 @@ const datosEstructurados = {
             no en uno de los dos botones: las necesitan los dos (el mailto:
             y el copiado), y tener una sola copia evita que se
             desincronicen. */}
+        {/* Nace APAGADO y el script lo enciende: sin JavaScript el correo
+            no es un enlace, y un control que se ve igual que el de
+            LinkedIn de al lado pero no hace nada es una promesa falsa. */}
         <div
-          class="contacto__dividido"
+          class="contacto__dividido contacto__dividido--apagado"
           data-usuario="benjamin.achibury"
           data-dominio="protonmail.com"
         >
@@ -358,24 +389,6 @@ const datosEstructurados = {
           lectores no la anuncian porque nunca la vieron vacía. */}
       <p class="visualmente-oculto" aria-live="polite" data-copiar-aviso></p>
 
-      {/* Sin JavaScript el botón de correo no se arma y quedaría sin
-          salida, así que acá va la dirección de respaldo.
-
-          El navegador solo dibuja el contenido de un <noscript> cuando el
-          scripting está apagado, o sea que esto NO se ve en una visita
-          normal. Y como el recolector que renderiza sí ejecuta
-          JavaScript, tampoco lo ve él. Al que lee el HTML crudo le queda
-          la misma cadena partida que había antes: no se pierde nada
-          respecto de la versión anterior, y solo en este camino. */}
-      <noscript>
-        <p class="contacto__respaldo">
-          El botón de correo se arma con JavaScript. Si lo tienes
-          desactivado, escríbeme a <span class="contacto__respaldo-dato"
-            >benjamin.achibury<span>&#64;</span>protonmail.com</span
-          >.
-        </p>
-      </noscript>
-
       {/* Arma el enlace mailto: en el navegador.
 
           `is:inline` le pide a Astro que lo deje tal cual dentro del HTML
@@ -400,6 +413,16 @@ const datosEstructurados = {
           var dominio = caja.getAttribute('data-dominio');
           if (!usuario || !dominio) return;
           var direccion = usuario + '@' + dominio;
+
+          /* --- 0. Encender el control ---
+
+             El marco (borde, fondo, radio) lo dibuja el CONTENEDOR, no el
+             <span>: adentro, `.contacto__dividido .contacto__boton` va con
+             `border: 0` y fondo transparente. Por eso el apagado se quita
+             aca, en el contenedor, y no en el elemento del correo. Al
+             sacar la clase, lo que queda es exactamente el marcado que
+             habia antes de que existiera el estado apagado. */
+          caja.classList.remove('contacto__dividido--apagado');
 
           /* --- 1. El <span> del correo pasa a ser un <a> con mailto: ---
 
@@ -626,6 +649,46 @@ const datosEstructurados = {
   /* Senal de grupo: el marco entero se tine cuando el foco cae en
      cualquiera de las dos zonas. Cual de las dos es, lo dice el anillo
      interior de mas abajo. */
+  /* EL ESTADO APAGADO: como se ve el correo cuando el script NO corrio.
+
+     Es el estado inicial del HTML, y el script lo quita. Existe porque
+     sin JavaScript el <span> del correo no es un enlace y no hace nada,
+     pero se veia identico al <a> de LinkedIn que si funciona: misma caja,
+     mismo borde, mismo fondo. Un control que promete y no cumple es peor
+     que uno que se anuncia inerte.
+
+     Apagado, se lee como texto secundario: sin marco, sin relleno de
+     boton y en --texto-suave, el mismo tratamiento que cualquier otro
+     texto de apoyo del sitio. La direccion de verdad esta arriba, en el
+     <noscript>.
+
+     NO cambia nada del correo partido ni del ensamblado por JavaScript
+     (ver "NO TOCAR" punto 5, docs/no-tocar.md): las dos mitades siguen
+     viajando en data-usuario y data-dominio y el mailto: se sigue armando
+     en el navegador. Lo unico que cambia es el aspecto de este camino.
+
+     Contraste verificado del texto apagado contra el fondo de la pagina,
+     que es el fondo real una vez que se quita --superficie del marco:
+     7.58:1 en claro (#475569 sobre #ffffff) y 6.96:1 en oscuro (#94a3b8
+     sobre #0f172a). Los dos por encima del minimo 4.5:1. */
+  .contacto__dividido--apagado {
+    border-color: transparent;
+    background: none;
+  }
+
+  .contacto__dividido--apagado .contacto__boton {
+    min-height: 0;
+    padding: 0;
+    color: var(--texto-suave);
+    font-weight: 400;
+  }
+
+  /* El icono tambien baja: en --acento seguiria siendo la senal mas
+     fuerte del bloque y volveria a leerse como control. */
+  .contacto__dividido--apagado .contacto__icono {
+    color: var(--texto-suave);
+  }
+
   .contacto__dividido:focus-within {
     border-color: var(--acento);
   }
@@ -830,9 +893,11 @@ const datosEstructurados = {
     }
   }
 
-  /* Solo se ve con el scripting apagado (esta dentro de un <noscript>). */
+  /* Solo se ve con el scripting apagado (esta dentro de un <noscript>).
+     El margen va ABAJO y no arriba porque el bloque se dibuja ENCIMA de
+     los botones. */
   .contacto__respaldo {
-    margin: var(--e-4) 0 0;
+    margin: 0 0 var(--e-4);
     font-size: var(--t-sm);
     color: var(--texto-suave);
   }
