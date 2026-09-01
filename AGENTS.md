@@ -18,44 +18,75 @@ El sitio está **publicado e indexable** en https://achibury.github.io.
 El `noindex` que acompañó todo el desarrollo ya se quitó.
 
 Hay **un lab real publicado**: `hardening-router-cisco` — auditoría y
-hardening de un router Cisco, `categoria: infraestructura`.
+hardening de un router Cisco, `categoria: infraestructura`. Va marcado
+`destacado: true`, la primera aplicación real de ese campo: lo fija en la
+home sin depender de que siga siendo el más reciente.
 
 El header lleva el **monograma BA** en vez del nombre en texto. Todo lo
 de la marca está en la sección "La marca" (`docs/marca.md`); la fuente única es
 `src/lib/logo.ts`.
 
-`npm run build` genera **6 páginas** (home, `/labs`, el detalle del lab,
-`/herramientas`, `/sobre-mi` y `404`) más `sitemap-index.xml`.
+`npm run build` genera **5 páginas** (home, `/labs`, el detalle del lab,
+`/sobre-mi` y `404`) más `sitemap-index.xml`.
 
-Los otros dos `.md` de `src/content/labs/` — el de PowerShell/Sigma y el
-de Volatility — son **contenido de ejemplo ficticio** con `borrador: true`.
-Se conservan como referencia de formato y no generan página. Si el conteo
-de páginas no te cuadra, esa es la razón; no está roto.
+**`/herramientas` ya no existe.** Era un placeholder que decía "Sección
+en construcción" y estaba publicado e indexable. Se borró entero: la
+página, su enlace en el menú del header y las referencias de este
+archivo. El sitemap no necesitó tocarse — se arma leyendo `dist/`, así
+que la URL desapareció sola.
+
+En `src/content/labs/` hay **otros cuatro `.md`**, todos con
+`borrador: true`, todos **fuera de producción** y ninguno genera página.
+Si el conteo de páginas no te cuadra, esa es la razón; no está roto. Son
+dos cosas distintas:
+
+- **Ejemplo ficticio** — el de PowerShell/Sigma y el de Volatility. Se
+  conservan como referencia de formato: así se ve un lab terminado.
+- **Andamiaje, prefijo `andamiaje-`** — dos archivos con el título en
+  mayúsculas que dice que son de prueba. No describen ningún trabajo:
+  existen para que en `npm run dev` haya cinco labs y se pueda mirar cómo
+  se comportan la home y `/labs` con más de tres, y para disparar el tope
+  de cuatro herramientas de la tarjeta con su indicador `+N`. Son
+  **temporales**: se borran de una cuando termine la V2, con
+  `rm src/content/labs/andamiaje-*.md`. El prefijo existe para eso, así
+  que si agregas andamiaje nuevo, respétalo.
 
 Los labs largos llevan **tabla de contenidos**: barra a la derecha en
 escritorio, desplegable en móvil. Se enciende sola según el largo del
-lab, así que hoy la tiene el de hardening y ninguno de los dos
+lab, así que hoy la tiene el de hardening y ninguno de los cuatro
 borradores. Ver "Tabla de contenidos de un lab" (`docs/tabla-de-contenidos.md`).
 
 ## Pendientes
 
 Cosas abiertas a hoy, verificadas contra el código:
 
-- **`/herramientas` es un placeholder.** Dice "Sección en construcción".
 - **No existe `public/cv.pdf`**, así que la sección del currículum de
   `/sobre-mi` no se genera. Es a propósito: mejor sin sección que con un
   botón roto. Se activa sola al dejar el PDF ahí.
 - **`hayCertificaciones` está en `false`** en `sobre-mi.astro`, porque
   todavía no hay ninguna. El markup ya está escrito esperando.
-- **V2 — el header envuelve en dos filas a 360px.** Medido con las
-  métricas reales de Segoe UI a 14px: el menú completo mide 212px y el
-  ancho disponible a 360px es 312px (360 menos 24 de padding por lado).
-  Con el nombre en texto (117px) daba 361 y no cabía. Con el logo a 26px
-  (40px de ancho) da 284 y **entra en una fila**, así que el logo lo
-  mejoró — pero el margen es de 28px y cualquier enlace nuevo en el menú
-  lo vuelve a romper. Queda anotado, **no arreglado**: la salida
-  probablemente sea un menú colapsable, y eso es una decisión de diseño
-  aparte.
+- ~~**V2 — el header envuelve en dos filas a 360px.**~~ **RESUELTO** al
+  borrar `/herramientas`, sin tocar el header. Vuelto a medir con las
+  métricas reales de Segoe UI a 14px en peso 600, que es el del menú:
+
+  | | Antes (3 enlaces) | Ahora (2 enlaces) |
+  | --- | --- | --- |
+  | Menú | 211px | **105px** |
+  | Header entero (logo 40 + hueco 32 + menú) | 283px | **177px** |
+  | Holgura sobre los 312px disponibles | 29px | **135px** |
+
+  Los 312px salen de 360 menos 24 de relleno por lado. El menú de antes
+  eran `Labs` 29 + `Herramientas` 85 + `Sobre mí` 57 más dos huecos de
+  20; ahora es `Labs` + `Sobre mí` más un hueco.
+
+  Lo que estaba anotado no era que el header se rompiera hoy — entraba
+  en una fila por 29px — sino que **el margen era tan fino que cualquier
+  enlace nuevo lo rompía**. Ese riesgo se fue: con 135px de holgura, un
+  enlace nuevo tendría que medir más de 115px de texto para volver a
+  partir el header, y `Herramientas`, que era el más largo del menú,
+  medía 85px. Con dos enlaces nuevos vuelve a apretar, así que si el
+  menú crece, hay que volver a medir. El menú colapsable **deja de ser
+  necesario** para este problema.
 
 - **El filtro de `/labs` está decidido pero NO construido, y su análisis
   salió de este archivo.** Eran 216 líneas describiendo algo que no

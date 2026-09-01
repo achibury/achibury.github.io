@@ -363,6 +363,46 @@ main :is(p, h1, h2, h3, ul, ol, blockquote, dl) {
   background: var(--acento-fondo);
 }
 
+/* Variante de estado. Hoy la usa un solo chip, el de "Borrador" de una
+   tarjeta, que ademas solo puede aparecer en `npm run dev`.
+
+   Existe porque un estado y una herramienta NO son lo mismo y no pueden
+   verse igual: "Nmap" describe el contenido del lab, "Borrador" describe
+   en que punto del proceso esta ese lab. Con el mismo chip para los dos,
+   el ojo los lee como una sola fila de etiquetas equivalentes.
+
+   Se separa por TRES senales, ninguna de las cuales es un color nuevo:
+
+     - Relleno: transparente contra el gris solido de las herramientas.
+       Un chip sin fondo pesa menos que uno relleno, que es justo la
+       subordinacion que se busca.
+     - Trazo: punteado contra solido. Es el mismo recurso que ya usa el
+       grupo "Funcion" en la cabecera de un lab y el bloque `.aviso`, y
+       por el mismo motivo que esta escrito ahi: no depender solo del
+       color deja la distincion en pie para quien no distingue tonos.
+     - Letra: versalitas espaciadas, como `.titulo-seccion`. Un rotulo de
+       estado se lee como rotulo, no como nombre propio.
+
+   Y sigue por debajo de la categoria, que es la unica que suma el acento
+   mas un fondo relleno.
+
+   Contraste verificado del texto contra el fondo de la pagina (el chip
+   es transparente, asi que el fondo real es --fondo, no --chip-fondo):
+   7.58:1 en claro (#475569 sobre #ffffff) y 6.96:1 en oscuro (#94a3b8
+   sobre #0f172a). Los dos muy por encima del minimo 4.5:1.
+
+   El peso 600 es Semibold de verdad: 500 no existe en Segoe UI y caeria
+   a Regular sin cambiar nada. Ver "Los pesos que la fuente tiene de
+   verdad" en docs/sistema-de-diseno.md. */
+.etiqueta--estado {
+  background: none;
+  border-style: dashed;
+  color: var(--texto-suave);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .lista-etiquetas {
   list-style: none;
   margin: 0;

@@ -2,19 +2,46 @@
 /**
  * Tarjeta que resume un lab en un listado.
  *
- * Se usa en dos lugares: la home (últimos 3) y /labs (todos). Al estar
- * en un componente, si mañana quieres cambiar cómo se ve un lab en las
- * listas, lo cambias una vez acá y se actualiza en los dos lados.
+ * Se usa en dos lugares: la home (una seleccion corta) y /labs (el
+ * archivo completo). Al estar en un componente, si manana quieres
+ * cambiar como se ve un lab en las listas, lo cambias una vez aca y se
+ * actualiza en los dos lados.
+ *
+ * La UNICA diferencia entre los dos usos es cuantas herramientas
+ * muestra, y va por prop. No hay una segunda tarjeta.
  */
 import type { Lab } from '../lib/labs';
 import { ETIQUETAS_CATEGORIA, formatearFecha } from '../lib/labs';
 
 interface Props {
   lab: Lab;
+  /**
+   * Cuantas herramientas se muestran antes de resumir el resto como
+   * "+N". Por defecto TODAS, y esa eleccion del defecto importa: la
+   * tarjeta muestra lo que el lab declara, y recortar es una decision
+   * editorial que la pagina tiene que pedir explicitamente. Con el
+   * defecto al reves, una pagina nueva escondaria datos sin que nadie
+   * lo hubiera decidido.
+   *
+   * Hoy solo la home lo pide, con MAX_HERRAMIENTAS_HOME: es vitrina y
+   * se escanea. /labs es archivo, y ahi el detalle es el punto.
+   */
+  maxHerramientas?: number;
 }
 
-const { lab } = Astro.props;
-const { titulo, resumen, fecha, categoria, borrador } = lab.data;
+const { lab, maxHerramientas = Infinity } = Astro.props;
+const { titulo, resumen, fecha, categoria, herramientas, borrador } = lab.data;
+
+/**
+ * El orden del frontmatter es intencional (primero las principales), asi
+ * que cortar por el final se queda con las que importan: no hay que
+ * ordenar ni puntuar nada aca.
+ *
+ * Con el defecto (Infinity) esto no recorta nada y `herramientasOcultas`
+ * queda en 0, asi que el bloque del "+N" no se renderiza.
+ */
+const herramientasVisibles = herramientas.slice(0, maxHerramientas);
+const herramientasOcultas = herramientas.length - herramientasVisibles.length;
 ---
 
 <article class="tarjeta">
@@ -26,7 +53,7 @@ const { titulo, resumen, fecha, categoria, borrador } = lab.data;
     {
       /* Este aviso solo puede aparecer en `npm run dev`: en producción
          los borradores ni siquiera llegan a esta tarjeta. */
-      borrador && <span class="etiqueta">Borrador</span>
+      borrador && <span class="etiqueta etiqueta--estado">Borrador</span>
     }
   </div>
 
@@ -38,6 +65,36 @@ const { titulo, resumen, fecha, categoria, borrador } = lab.data;
   </h3>
 
   <p class="texto-suave">{resumen}</p>
+
+  {
+    /* `herramientas` tiene `.default([])` en el schema, asi que siempre
+       llega como lista: basta mirar el largo, sin la guarda de
+       `undefined` que si necesitan mitre_attack y funcion en Lab.astro.
+
+       El rotulo va en aria-label y no en un <p> visible como en la
+       cabecera del lab, por dos motivos: en una lista de tarjetas el
+       rotulo se repetiria en cada una y le quitaria peso al titulo, y
+       la version con `aria-labelledby` obligaria a un id unico por
+       tarjeta. Quien navega con lector de pantalla igual oye el grupo
+       anunciado como "Herramientas". */
+    herramientas.length > 0 && (
+      <ul class="lista-etiquetas tarjeta__herramientas" aria-label="Herramientas">
+        {herramientasVisibles.map((h) => (
+          <li class="etiqueta">{h}</li>
+        ))}
+        {/* El "+N" lleva su propio nombre accesible: leido en voz alta,
+            "mas 2" solo no dice de que. */}
+        {herramientasOcultas > 0 && (
+          <li
+            class="etiqueta tarjeta__mas"
+            aria-label={`y ${herramientasOcultas} herramienta${herramientasOcultas > 1 ? 's' : ''} mas`}
+          >
+            +{herramientasOcultas}
+          </li>
+        )}
+      </ul>
+    )
+  }
 </article>
 
 <style>
@@ -92,5 +149,41 @@ const { titulo, resumen, fecha, categoria, borrador } = lab.data;
 
   .tarjeta p {
     margin: 0;
+  }
+
+  /* --- Herramientas ---
+     Van ABAJO del todo y en `.etiqueta` neutra, no en `.etiqueta--acento`.
+     Las dos cosas dicen lo mismo: la categoria es la que clasifica el lab
+     y estas son metadato de apoyo. La jerarquia se apoya en dos senales
+     que ya existen en el sistema, sin inventar un chip nuevo:
+
+       - Color: teal con fondo de acento (categoria) contra gris --chip-*
+         (herramientas). El acento sigue siendo el unico color que
+         clasifica, tal como esta escrito en el sistema de diseno.
+       - Posicion: primera linea contra ultima.
+
+     Los 4px extra sobre el gap de la tarjeta (8 + 4 = 12) son porque
+     estas son cajas con borde y no texto corrido: pegadas al resumen a
+     la misma distancia que hay entre las tres lineas de arriba, se leian
+     como parte del parrafo. Sigue muy por debajo de los 32px que separan
+     una tarjeta de la siguiente, asi que la tarjeta se lee igual como
+     una unidad. */
+  .tarjeta__herramientas {
+    margin-top: var(--e-1);
+  }
+
+  /* El "+N" es un contador, no una herramienta: tiene que leerse como
+     "hay mas" y no como una etiqueta mas de la fila. Por eso pierde el
+     relleno y el borde y se queda solo con el texto atenuado, un escalon
+     por debajo del chip normal.
+
+     `border-color: transparent` y no `border: none`: el borde de 1px
+     sigue ocupando su lugar, asi que la caja mide exactamente lo mismo
+     que los chips de al lado y las bases de texto quedan alineadas. Con
+     `border: none` el "+N" sube 1px respecto de la fila. */
+  .tarjeta__mas {
+    border-color: transparent;
+    background: none;
+    color: var(--texto-suave);
   }
 </style>

@@ -60,6 +60,19 @@ const labs = defineCollection({
 
     // Si es true, el lab existe en el repo pero NO se publica en el sitio.
     borrador: z.boolean().default(false),
+
+    // Si es true, el lab se muestra en la portada.
+    //
+    // Es una eleccion editorial, no una propiedad del lab: sirve para
+    // sostener arriba un trabajo bueno cuando lo ultimo publicado son
+    // notas cortas. Mientras NINGUN lab lo tenga, la home cae sola en
+    // los mas recientes, asi que dejarlo sin usar es una posicion
+    // valida y no un pendiente.
+    //
+    // Marcar mas de tres no rompe nada: la home toma los tres mas
+    // recientes de entre los destacados. Ver getLabsHome() en
+    // src/lib/labs.ts.
+    destacado: z.boolean().default(false),
   })
     // Un `dateModified` anterior al `datePublished` no tiene sentido y los
     // buscadores lo tratan como dato sucio. Mejor que falle el build con

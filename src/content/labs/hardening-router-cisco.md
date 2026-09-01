@@ -6,6 +6,7 @@ categoria: "infraestructura"
 herramientas: ["PNETLab", "Nmap"]
 funcion: ["proteger", "identificar"]
 borrador: false
+destacado: true
 ---
 
 ## Contexto

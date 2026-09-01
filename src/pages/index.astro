@@ -2,16 +2,18 @@
 /**
  * Home (/).
  *
- * Nombre, línea de posicionamiento y los 3 labs más recientes.
- * `.slice(0, 3)` corta la lista ya ordenada: al publicar un lab nuevo,
- * entra solo acá y el más viejo sale.
+ * Nombre, línea de posicionamiento y una selección corta de labs.
+ *
+ * QUÉ labs y CUÁNTOS lo decide `getLabsHome()` en `src/lib/labs.ts`, no
+ * esta página: acá no hay ningún `.slice()` ni ningún filtro. La regla
+ * de qué se publica vive en un solo archivo, y esta página solo pinta lo
+ * que recibe. `/labs` sigue mostrando el archivo completo.
  */
 import Base from '../layouts/Base.astro';
 import LabCard from '../components/LabCard.astro';
-import { getLabsPublicados } from '../lib/labs';
+import { getLabsHome, MAX_HERRAMIENTAS_HOME } from '../lib/labs';
 
-const labs = await getLabsPublicados();
-const ultimosLabs = labs.slice(0, 3);
+const { labs: labsHome, total, hayMas } = await getLabsHome();
 ---
 
 <Base
@@ -28,27 +30,37 @@ const ultimosLabs = labs.slice(0, 3);
     </section>
 
     <section class="seccion">
-      <h2 class="titulo-seccion">Últimos labs</h2>
+      {/* Rótulo fijo, y a propósito. Desde que `destacado` FIJA un lab en
+          vez de reemplazar la lista, lo que hay debajo puede ser una
+          mezcla de labs fijados y labs recientes, así que ni "Labs
+          destacados" ni "Últimos labs" serían ciertos siempre.
+
+          El enlace a /labs va SOLO acá, en la fila del rótulo. Estuvo
+          también al final de la sección y se quitó: con tres labs los
+          dos caen casi en la misma pantalla y el segundo se lee como
+          repetición, no como salida. Arriba se ve sin bajar, que era el
+          problema que había que resolver. `hayMas` lo decide en
+          labs.ts; esta página no compara nada. */}
+      <div class="seccion__cabecera">
+        <h2 class="titulo-seccion">Labs</h2>
+        {
+          hayMas && (
+            <a class="ver-mas" href="/labs/">
+              Ver los {total} labs →
+            </a>
+          )
+        }
+      </div>
 
       {
-        ultimosLabs.length > 0 ? (
+        labsHome.length > 0 ? (
           <div>
-            {ultimosLabs.map((lab) => (
-              <LabCard lab={lab} />
+            {labsHome.map((lab) => (
+              <LabCard lab={lab} maxHerramientas={MAX_HERRAMIENTAS_HOME} />
             ))}
           </div>
         ) : (
           <p class="texto-suave">Todavía no hay labs publicados.</p>
-        )
-      }
-
-      {
-        /* El enlace a /labs solo tiene sentido si hay más labs de los
-           que ya se muestran acá arriba. */
-        labs.length > ultimosLabs.length && (
-          <p class="ver-todos">
-            <a href="/labs/">Ver todos los labs →</a>
-          </p>
         )
       }
     </section>
@@ -63,8 +75,40 @@ const ultimosLabs = labs.slice(0, 3);
     text-wrap: pretty;
   }
 
-  .ver-todos {
-    margin-top: var(--e-8);
-    font-size: var(--t-sm);
+  /* --- Fila del encabezado de sección ---
+     El rótulo a la izquierda y el enlace a la derecha, en la misma línea.
+
+     El margen inferior se muda del rótulo a esta fila: `.titulo-seccion`
+     trae `margin: 0 0 var(--e-6)` de global.css, y dejarlo puesto haría
+     que el rótulo empujara solo su mitad de la fila.
+
+     `align-items: baseline` y no `center`: son dos textos de cuerpos
+     distintos, y lo que el ojo alinea es la línea sobre la que se apoyan
+     las letras, no el centro de sus cajas.
+
+     `flex-wrap` porque a 360px las dos piezas miden ~30px y ~90px con
+     los 24px de relleno del contenedor: entran holgadas en una línea,
+     pero si el rótulo crece el enlace baja en vez de desbordar. */
+  .seccion__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--e-2) var(--e-4);
+    margin-bottom: var(--e-6);
   }
+
+  .seccion__cabecera .titulo-seccion {
+    margin-bottom: 0;
+  }
+
+  /* Va en --t-xs, el mismo cuerpo del rótulo, y no en --t-sm: al lado de
+     un rótulo de 12px, un enlace de 14px en color de acento pesa más que
+     el título de la sección y la jerarquía se da vuelta. Acá tiene que
+     leerse como un par del rótulo, no como su encabezado. */
+  .ver-mas {
+    font-size: var(--t-xs);
+    white-space: nowrap;
+  }
+
 </style>

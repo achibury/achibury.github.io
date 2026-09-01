@@ -24,11 +24,16 @@ con un mensaje claro; es a propósito, es la red de seguridad.
 | `resumen` | string | obligatorio; se usa como `<meta description>` |
 | `fecha` | date | `z.coerce.date()`, se escribe `2026-03-14` |
 | `categoria` | enum | obligatorio, ver abajo |
-| `herramientas` | string[] | validado contra `taxonomia.ts`, por defecto `[]` |
+| `herramientas` | string[] | validado contra `taxonomia.ts`, por defecto `[]`; **el orden importa** |
 | `mitre_attack` | string[] | **opcional** |
 | `funcion` | enum[] | **opcional**, NIST CSF 2.0 |
 | `actualizado` | date | **opcional**, se emite como `dateModified` |
 | `borrador` | boolean | por defecto `false` |
+| `destacado` | boolean | por defecto `false`; lo sube a la portada |
+
+**El orden de `herramientas` es intencional: primero las principales**, porque
+la tarjeta del listado muestra solo las primeras cuatro y resume el resto como
+`+N`.
 
 **Categorías** (las seis, no inventar otras):
 `infraestructura` · `deteccion` · `analisis` · `herramienta` · `cumplimiento` · `notas`

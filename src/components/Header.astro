@@ -26,7 +26,6 @@ import Logo from './Logo.astro';
 
 const enlaces = [
   { href: '/labs/', texto: 'Labs' },
-  { href: '/herramientas/', texto: 'Herramientas' },
   { href: '/sobre-mi/', texto: 'Sobre mí' },
 ];
 
@@ -112,11 +111,17 @@ function esActivo(href: string): boolean {
      desarmarse, y sale de sumar dos tokens en vez de escribir un pixel
      suelto.
 
-     NO lo bajes a --e-4 "para ganar espacio en movil". Esta medido: a
-     360px hay 312px disponibles y el header ocupa 281 con este gap, o
-     sea 31px de holgura. Incluso con 24 sobran 23px. El ancho nunca fue
-     la restriccion — yo mismo lo aprete a 16 creyendo que si, y lo unico
-     que consegui fue el apretujamiento. */
+     NO lo bajes a --e-4 "para ganar espacio en movil". Esta medido con
+     Segoe UI a 14px en peso 600: a 360px hay 312px disponibles (360
+     menos 24 de relleno por lado) y el header ocupa 177 con este gap
+     (logo 40 + hueco 32 + menu 105), o sea 135px de holgura. Incluso
+     con 24 sobran 131. El ancho nunca fue la restriccion — yo mismo lo
+     aprete a 16 creyendo que si, y lo unico que consegui fue el
+     apretujamiento.
+
+     Las cifras viejas de este comentario (281px y 31px de holgura) eran
+     de cuando el menu tenia tres enlaces. Al borrar herramientas el
+     menu paso de 211px a 105px. */
   .encabezado__lista {
     list-style: none;
     display: flex;
