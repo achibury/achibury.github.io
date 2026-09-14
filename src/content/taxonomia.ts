@@ -28,6 +28,7 @@ export const HERRAMIENTAS = [
   'PowerShell',
   'rsyslog',
   'Sigma',
+  'Cisco IOS',
   'Splunk',
   'Suricata',
   'Sysmon',
