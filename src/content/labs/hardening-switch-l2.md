@@ -1,11 +1,12 @@
 ---
 titulo: "Hardening del borde de acceso en un switch Cisco"
-resumen: "Encendí dos switches Cisco de fábrica y antes de escribir un comando ya habían negociado un troncal y elegido una raíz de spanning tree. Endurecí los protocolos que deciden solos y verifiqué cada control provocando la falla que debía evitar. Incluye lo que la plataforma no me dejó aplicar y por qué dejé puertos fuera de algunos controles."
+resumen: "Dos switches Cisco de fábrica ya habían elegido troncal y raíz de spanning tree antes de que yo escribiera un comando. Reemplacé cada decisión automática por una de diseño y comprobé los controles provocando la falla que evitan."
 fecha: 2026-09-09
 categoria: "infraestructura"
 herramientas: ["PNETLab", "Cisco IOS"]
 funcion: ["proteger"]
-borrador: true
+borrador: false
+destacado: false
 ---
 
 ## Contexto y alcance
@@ -53,7 +54,7 @@ ADM-01 se conecta directo a R1, sin pasar por ningún switch, así que queda fue
 
 ## Línea base
 
-El estado de fábrica cabe en seis líneas:
+El estado de fábrica cabe en una sola salida:
 
 ```
 SW1#show interfaces trunk
@@ -127,7 +128,7 @@ line vty 0 4
 
 No hay `enable secret` ni `enable password`: quien llegue a la consola pasa a modo privilegiado escribiendo `enable`. Las cinco VTY están sin autenticación ni restricción de transporte, y la `line aux 0` está presente y vacía, la misma que se me pasó en el lab del router.
 
-De fábrica los dos se llaman `Switch`, y así los reportaba `show cdp neighbors`: con equipos homónimos ningún registro es atribuible. Los hostnames de arriba ya están corregidos, los cambié antes de la línea base.
+Un aviso sobre las salidas de esta sección: las recapturé más tarde, con los nombres ya cambiados, así que dicen SW1 y SW2. De fábrica los dos responden a `Switch`. Por qué los renombré está en Preparación.
 
 ### Hallazgos de la línea base
 
@@ -148,7 +149,7 @@ De fábrica los dos se llaman `Switch`, y así los reportaba `show cdp neighbors
 
 Antes de aplicar ningún control preparé los equipos para poder medir. Nada de lo que hay acá reduce superficie de ataque, y por eso va separado de la política.
 
-Cada switch quedó con un nombre propio, para que los mensajes de registro sean atribuibles. Habilité el buffer de registro en los dos, 16384 bytes, y creé las VLANs 998 y 999 vacías, con números bien fuera del rango de datos para que se note que no son productivas. El reloj lo ajusté a mano en ambos.
+Cada switch quedó con un nombre propio. De fábrica los dos se llaman `Switch`, y así reportaba `show cdp neighbors` al vecino: con equipos homónimos ningún mensaje de registro es atribuible, porque sabes que algo pasó pero no en cuál de los dos. Habilité el buffer de registro en los dos, 16384 bytes, y creé las VLANs 998 y 999 vacías, con números bien fuera del rango de datos para que se note que no son productivas. El reloj lo ajusté a mano en ambos.
 
 Y no sobrevive un reinicio: al volver al día siguiente tuve que ajustarlo de nuevo. Van dos veces en un laboratorio de dos días.
 
@@ -176,7 +177,9 @@ El control 3 quedó parcial, en cuatro de cinco componentes. Qué faltó y por q
 
 ## Aplicación y verificación
 
-Apliqué en el orden de la tabla y siempre desde la consola. El troncal es donde está el hallazgo principal, así que ese va con su antes y después. Como estaba:
+No apliqué en el orden de la tabla. Empecé por el troncal, seguí con los puertos de acceso, la prioridad de spanning tree, BPDU guard y los puertos sin uso, y terminé con port-security; los controles 1, 2 y 11 quedaron para otra sesión. El troncal va primero porque ahí está el hallazgo. Port-security va al final porque es el único que puede dejar un puerto fuera de servicio, y no quería andar peleando con eso mientras verificaba otra cosa. Todo desde la consola.
+
+Así que el troncal, con su antes y después. Como estaba:
 
 ```
 Port        Mode             Encapsulation  Status        Native vlan
@@ -293,10 +296,10 @@ Menos de tres segundos entre levantar el puerto y que cayera. Un operador no alc
 |---|---|---|
 | Mensaje de causa | `%PORT_SECURITY-2-PSECURE_VIOLATION` | `%SPANTREE-2-BLOCK_BPDUGUARD` |
 | Identifica al responsable | Sí, con la MAC | No, solo el puerto |
-| Mensaje genérico común | `%PM-4-ERR_DISABLE` | `%PM-4-ERR_DISABLE` |
+| Mensaje genérico común | `%PM-4-ERR_DISABLE`, causa `psecure-violation` | `%PM-4-ERR_DISABLE`, causa `bpduguard` |
 | Estado final del puerto | `err-disabled` | `err-disabled` |
 
-Los dos dejan el puerto igual, pero solo uno entrega un identificador que perseguir. El genérico dice que un puerto cayó, no por qué.
+Los dos dejan el puerto igual y los dos emiten el mismo mensaje genérico. Lo único que los distingue ahí es la cadena de causa, y es de la que hay que agarrarse al escribir una regla. Para saber quién lo provocó sirve solo el mensaje de port-security, que trae la MAC.
 
 De los cuatro mensajes de una violación de port-security, solo el que nombra al responsable sirve para detección; los otros tres son consecuencias. Qué centralizar y qué es ruido hay que resolverlo antes de mandar nada a un servidor de registro.
 
