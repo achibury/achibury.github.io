@@ -1,0 +1,3 @@
+[2023-12-30 12:10:32] WARNING - Intento de acceso fallido: IP 45.67.89.10 puerto 443 (HTTPS).
+[2023-12-30 12:12:00] INFO - Reintento detectado: IP 45.67.89.10.
+[2023-12-30 12:15:45] CRITICAL - 50 solicitudes simultáneas detectadas desde IPs 67.23.45.89 y 89.23.12.45
