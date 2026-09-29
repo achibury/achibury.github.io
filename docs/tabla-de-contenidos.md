@@ -12,7 +12,7 @@
 
 ## Tabla de contenidos de un lab
 
-Barra con las secciones del lab: fija a la derecha en escritorio,
+Barra con las secciones del lab: fija a la izquierda en escritorio,
 desplegable arriba del artículo en móvil.
 
 ### Las tres piezas
@@ -176,7 +176,7 @@ activo lleva además su barra de acento.
 ### Móvil: es un `<details>`, y es el MISMO marcado
 
 No hay dos versiones. Un solo `<details open>` que en escritorio cae en la
-columna de la derecha y en móvil queda como bloque desplegable arriba del
+columna de la izquierda y en móvil queda como bloque desplegable arriba del
 artículo.
 
 `<details>` nativo y no un desplegable escrito a mano porque trae gratis

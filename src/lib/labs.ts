@@ -52,8 +52,13 @@ export interface SeleccionHome {
    *
    * Es false cuando la home ya muestra TODOS los labs publicados: ahi el
    * enlace mandaria a una pagina con exactamente lo mismo que el lector
-   * ya tiene delante. Hoy en produccion hay 1 lab, asi que este es el
-   * caso real y los dos enlaces no se renderizan.
+   * ya tiene delante. Hoy en produccion hay 2 labs, menos que
+   * MAX_LABS_HOME, asi que este es el caso real y el enlace no se
+   * renderiza.
+   *
+   * En `npm run dev` SI aparece: ahi getLabsPublicados() deja pasar
+   * tambien los borradores, y con ellos el total pasa de MAX_LABS_HOME.
+   * No es un error; en produccion los borradores no cuentan.
    */
   hayMas: boolean;
 }

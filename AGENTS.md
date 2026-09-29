@@ -17,17 +17,21 @@ NO soy desarrollador web: explica las decisiones de código y no asumas conocimi
 El sitio está **publicado e indexable** en https://achibury.github.io.
 El `noindex` que acompañó todo el desarrollo ya se quitó.
 
-Hay **un lab real publicado**: `hardening-router-cisco` — auditoría y
-hardening de un router Cisco, `categoria: infraestructura`. Va marcado
-`destacado: true`, la primera aplicación real de ese campo: lo fija en la
-home sin depender de que siga siendo el más reciente.
+Hay **dos labs reales publicados**, los dos `categoria: infraestructura`:
+
+- `hardening-router-cisco` — auditoría y hardening de un router Cisco. Va
+  marcado `destacado: true`, la primera aplicación real de ese campo: lo
+  fija en la home sin depender de que siga siendo el más reciente.
+- `hardening-switch-l2` — hardening del borde de acceso en un switch
+  Cisco. **Está publicado a propósito** (`borrador: false`,
+  `destacado: false`); no es un borrador que se escapó.
 
 El header lleva el **monograma BA** en vez del nombre en texto. Todo lo
 de la marca está en la sección "La marca" (`docs/marca.md`); la fuente única es
 `src/lib/logo.ts`.
 
-`npm run build` genera **5 páginas** (home, `/labs`, el detalle del lab,
-`/sobre-mi` y `404`) más `sitemap-index.xml`.
+`npm run build` genera **6 páginas** (home, `/labs`, el detalle de cada
+uno de los dos labs, `/sobre-mi` y `404`) más `sitemap-index.xml`.
 
 **`/herramientas` ya no existe.** Era un placeholder que decía "Sección
 en construcción" y estaba publicado e indexable. Se borró entero: la
@@ -42,9 +46,9 @@ ejemplo ficticio** y se conservan como referencia de formato — así se ve
 un lab terminado. Si el conteo de páginas no te cuadra, esa es la razón;
 no está roto.
 
-Los labs largos llevan **tabla de contenidos**: barra a la derecha en
+Los labs largos llevan **tabla de contenidos**: barra a la izquierda en
 escritorio, desplegable en móvil. Se enciende sola según el largo del
-lab, así que hoy la tiene el de hardening y ninguno de los dos
+lab, así que hoy la tienen los dos labs publicados y ninguno de los dos
 borradores. Ver "Tabla de contenidos de un lab" (`docs/tabla-de-contenidos.md`).
 
 ## Pendientes
@@ -109,7 +113,7 @@ Cosas abiertas a hoy, verificadas contra el código:
   `notas/filtros-labs.md`: qué lógica, qué controles, cómo degrada sin
   JavaScript, y las **dos cosas que hay que resolver primero** — que
   `funcion` sea opcional en el schema, y que `categoria` y `funcion` se
-  solapen. **Se retoma al sexto lab publicado**, no antes; hoy hay uno.
+  solapen. **Se retoma al sexto lab publicado**, no antes; hoy hay dos.
   No está en `docs/` a propósito: no corresponde leerlo "antes de tocar
   el área" mientras el área no existe.
   Ojo: `notas/` está en `.gitignore`, así que ese archivo **no se
@@ -175,6 +179,11 @@ Gestionar el servidor en background con `astro dev stop`, `astro dev status` y `
 - Nunca commitear capturas sin que yo confirme que están sanitizadas
 - Español de Chile. Imperativo con tú ("reemplaza", "revisa"),
   nunca voseo rioplatense ("reemplazá", "revisá").
+- Para apagar un servidor usa `astro dev stop`, o termina **solo el PID
+  del proceso que tú levantaste**. Nunca cierres procesos por nombre
+  (`taskkill /IM node.exe`, `Stop-Process -Name node`, `pkill node` o
+  parecidos): en una sesión eso cerró todos los procesos Node de Windows,
+  incluidos los que no eran de este proyecto.
 
 ## Archivos de detalle
 
