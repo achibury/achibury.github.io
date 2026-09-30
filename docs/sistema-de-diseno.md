@@ -77,11 +77,103 @@ a Regular y no se ve ningún cambio. Medido con la fuente real,
 
 O sea que los escalones reales son **300 / 350 / 400 / 600 / 700**, y
 entre Regular y Semibold no hay nada intermedio. Antes de poner un peso
-que no esté en esa lista, comprobá que se vea: si pides 500 esperando
+que no esté en esa lista, comprueba que se vea: si pides 500 esperando
 "un poco más que normal", no vas a obtener nada.
 
 Por eso el menú del header usa 600 en reposo y 700 en el activo, no 500 y
 600.
+
+### La fuente del nombre (la única excepción)
+
+Todo el sitio va en `--fuente`, las fuentes del sistema. **Una sola cosa
+no**: el `h1` con el nombre en la home, que va en **Outfit**. Nada más la
+usa: ni el perfil ni la frase de la bienvenida, ni los `h1` de las otras
+páginas.
+
+**Por qué Outfit.** Es la tipografía más cercana a la construcción del
+monograma: la B de Outfit es barra recta más semicírculo, igual que la
+panza de la B en `logo.ts`, y su A termina en punta, como la del
+monograma. Se eligió viendo cuatro candidatas con cuatro animaciones en un
+prototipo (Archivo, Encode Sans, Outfit y Sora); el prototipo y sus
+capturas están en `notas/v3/`, que no se versiona.
+
+**Por qué solo el `h1` de la home.** Es el único lugar donde el nombre es
+el contenido. Llevar la fuente a más textos obligaría a traer el alfabeto
+entero (decenas de KB en vez de 4), y con eso a cargarla en todas las
+páginas.
+
+**El recorte.** `public/fuentes/outfit-nombre.woff2` trae **solo** las
+letras de "Benjamin Achibury": 15 caracteres distintos, **3.948 bytes**.
+Es variable en peso (100 a 900), así que cualquier peso de ese rango se ve
+de verdad: acá el 500 y el 650 **sí** existen, al revés que en Segoe UI.
+La licencia (OFL 1.1) va al lado, en `public/fuentes/OFL-Outfit.txt`.
+
+Lo genera `node scripts/generar-fuente.mjs`, a mano, como los otros
+`generar-*`. **Si cambia el nombre del `h1`, hay que volver a correrlo**:
+una letra que no esté en el recorte se dibuja con otra fuente, en medio
+del nombre, y el build no avisa. El script lee el `h1` de la home y se
+niega a seguir si no coincide con el texto que recorta.
+
+**Cómo se carga**, tres piezas que van juntas:
+
+| Pieza | Dónde | Qué hace |
+| --- | --- | --- |
+| `<link rel="preload" as="font" crossorigin>` | `index.astro`, por el hueco `head` de `Base.astro` | Pide la fuente junto con el CSS, antes de que el navegador encuentre el `h1` |
+| `@font-face` con `font-display: optional` | `<style>` de `index.astro` | Si la fuente no está lista en ~100ms, esa visita usa `--fuente` entera y **nunca** cambia a mitad de camino |
+| `font-weight: 100 900` en el `@font-face` | ídem | Le avisa al navegador que un solo archivo cubre todos los pesos |
+
+La precarga va **solo en la home**: ponerla en `Base.astro` haría que las
+seis páginas bajaran una fuente que usa una. Verificado en la pestaña
+Network: la home la baja una vez; `/labs`, un lab y `/sobre-mi`, ninguna.
+
+`crossorigin` no sobra aunque la fuente sea del mismo sitio: las fuentes
+se piden siempre en modo CORS, y una precarga sin ese atributo no
+coincide con el pedido real, así que la fuente se bajaría dos veces.
+
+**Qué se ve si la fuente no llega a tiempo.** Con `optional`, la fuente
+del sistema, durante toda esa visita, sin redibujo. Medido en Chrome:
+
+| Caso | El `h1` se pinta con | CLS |
+| --- | --- | --- |
+| Red normal | Outfit | 0 |
+| Slow 4G, sin caché | Outfit (la precarga la trae junto con el CSS) | 0 |
+| Fuente retenida 2 s | Segoe UI, y se queda en Segoe UI aunque la fuente llegue | 0 |
+| Fuente bloqueada | Segoe UI | 0 |
+
+**El espaciado.** Outfit va con `letter-spacing: 0`, su espaciado
+natural. El `-0.015em` que `global.css` les pone a los encabezados está
+pensado para Segoe UI; con Outfit juntaba las letras de más (el nombre
+medía 301px en vez de 310).
+
+**La animación.** El nombre pasa de peso 100 a 700 en 900ms, una vez por
+carga, dentro de `@media (prefers-reduced-motion: no-preference)`. Los
+tres números están al principio del `<style>` de `index.astro`
+(`--nombre-peso-inicial`, `--nombre-peso-final`, `--nombre-duracion`)
+para afinarlos cambiando un valor. Empezó en 300 y 700ms, y se bajó a
+100 y se alargó a 900ms porque así casi no se notaba. Cuatro cosas que
+no son obvias:
+
+- **Compensación de ancho.** Con peso fino las letras son más angostas.
+  El espaciado arranca en **0.0309em** (medido en Chrome con el archivo
+  real) para que el nombre mida lo mismo al principio y al final, y
+  termina en 0. Durante el camino queda hasta **4,45px** más angosto,
+  porque el ancho no crece en línea recta con el peso. Vale solo para el
+  peso inicial 100: si lo cambias, hay que volver a medirlo (con 300 era
+  0.0245em).
+- **Una palabra por línea bajo 28rem** (`width: min-content`). Sin esto,
+  un nombre justo en el límite de lo que cabe salta de una a dos líneas
+  a mitad de la animación y empuja todo lo de abajo. Pasó en el
+  prototipo. Con la regla, el nombre va siempre en dos líneas en
+  pantallas angostas, también con la fuente de reserva.
+- **`backwards` y no `both`.** Al terminar, la animación suelta el
+  elemento. El reposo es **idéntico píxel a píxel** al estado sin
+  animación: medido en Chrome y en Firefox, claro y oscuro, a 360 y
+  1366px, 0 píxeles distintos.
+- **Si la fuente no llega**, la animación corre igual sobre Segoe UI, que
+  solo tiene los pesos de la tabla de arriba: el nombre engrosa a saltos
+  en vez de gradualmente. Termina igual de quieto y sin mover nada:
+  medido con la fuente bloqueada, el alto del nombre no cambia en ningún
+  cuadro a 360, 390, 414, 440, 460 ni 1366px.
 
 ### Jerarquía por varias señales
 

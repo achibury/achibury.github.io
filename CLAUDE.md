@@ -30,6 +30,18 @@ El header lleva el **monograma BA** en vez del nombre en texto. Todo lo
 de la marca está en la sección "La marca" (`docs/marca.md`); la fuente única es
 `src/lib/logo.ts`.
 
+La home abre con una **bienvenida**: el nombre en **Outfit**, que pasa de
+fino a grueso una vez al cargar (ver "La fuente del nombre",
+`docs/sistema-de-diseno.md`), y debajo el perfil ("Ciberseguridad
+defensiva") y una frase de dos líneas en escritorio. Si cambias el
+largo de la frase, vuelve a medir que el título del primer lab siga
+visible a 1366×657: hoy queda en 449 → 475.
+
+**La bienvenida no lleva monograma grande ni enlace a los labs, a
+propósito.** Los dos se construyeron y se quitaron: el monograma
+duplicaba el logo del header que está justo encima, y el enlace
+apuntaba a labs que ya se ven sin hacer scroll. No los repongas.
+
 `npm run build` genera **6 páginas** (home, `/labs`, el detalle de cada
 uno de los dos labs, `/sobre-mi` y `404`) más `sitemap-index.xml`.
 
@@ -143,10 +155,15 @@ npm run preview          # previsualizar el build de producción en local
 
 node scripts/generar-logo.mjs   # regenerar favicon.svg y logo-circulo.svg
 node scripts/generar-og.mjs     # regenerar og.png
+node scripts/generar-fuente.mjs # regenerar la fuente del nombre (public/fuentes/)
 ```
 
-Los dos `generar-*` se corren **a mano** y solo cuando cambia lo que
-dibujan; ver "La marca" (`docs/marca.md`).
+Los tres `generar-*` se corren **a mano**, nunca en el build, y solo
+cuando cambia lo que producen: los dos primeros si cambia la marca (ver
+"La marca", `docs/marca.md`); `generar-fuente.mjs` **si cambia el
+nombre del `h1` de la home**, porque la fuente trae solo esas letras (ver
+"La fuente del nombre", `docs/sistema-de-diseno.md`). Ese script baja la
+fuente de Google Fonts, así que necesita red.
 
 No hay suite de tests ni linter configurados en este repo. `npm run build` es la
 verificación real: valida el frontmatter de todos los labs contra el schema Zod
@@ -275,6 +292,11 @@ el punto entero antes de tocar lo que nombra.
   `logo-circulo.svg` y `og.png` son **generados** — ver "La marca" (`docs/marca.md`) — y se
   commitean. El `.ico` se borró a propósito para no mantener dos archivos
   sincronizados, y todos los navegadores en uso soportan favicons en SVG.
+  `fuentes/outfit-nombre.woff2` (3,9 KB, recorte de Outfit con las letras
+  del nombre) y su licencia `fuentes/OFL-Outfit.txt` también son
+  generados, por `generar-fuente.mjs`, y se commitean. Es la única fuente
+  que no es del sistema, la usa solo el `h1` de la home y **solo la home
+  la descarga**: ver "La fuente del nombre" (`docs/sistema-de-diseno.md`).
   Las capturas de los labs **no** van acá: ver "Capturas e imágenes" (`docs/escribir-labs.md`).
 - `src/assets/labs/<slug>/` guarda las capturas de cada lab, para que
   Astro las procese en el build.

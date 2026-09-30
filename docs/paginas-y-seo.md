@@ -33,6 +33,14 @@
   referenciada con `new URL('/og.png', Astro.site)`. Tiene que ser URL
   absoluta porque LinkedIn y compañía leen la etiqueta desde sus propios
   servidores, donde `/og.png` no significa nada.
+
+  Al final del `<head>` hay un **hueco con nombre, `head`**
+  (`<slot name="head" />`), para que una página agregue algo a su propio
+  `<head>` sin tocar las demás. Hoy lo usa solo la home, para precargar la
+  fuente del nombre (ver "La fuente del nombre" en
+  `docs/sistema-de-diseno.md`). Una página que no lo usa no emite nada.
+  Lo que va ahí **no** va en `Base.astro` directamente: estaría en las
+  seis páginas.
 - `src/layouts/Lab.astro` arma la cabecera del lab y estila el HTML que sale
   del Markdown con `:global()` acotado a `.prosa`. También monta la rejilla
   de dos columnas cuando el lab lleva tabla de contenidos, y lleva el

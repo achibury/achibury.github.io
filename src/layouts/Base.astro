@@ -134,6 +134,14 @@ const urlImagenOG = new URL('/og.png', Astro.site);
         el autor y la fecha de forma explícita en vez de adivinarlos. */}
     {datosEstructurados && <DatosEstructurados datos={datosEstructurados} />}
 
+    {/* Hueco para que UNA página agregue algo a su propio <head> sin
+        tocar las demás. Una página que no lo usa no emite nada acá.
+
+        Hoy lo usa solo la home, para precargar la fuente del nombre. Esa
+        precarga NO puede ir en este archivo: estaría en las seis páginas,
+        y las otras cinco bajarían una fuente que no usan. Ver "La fuente
+        del nombre" en docs/sistema-de-diseno.md. */}
+    <slot name="head" />
   </head>
 
   <body>

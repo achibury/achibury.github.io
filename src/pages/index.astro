@@ -2,7 +2,8 @@
 /**
  * Home (/).
  *
- * Nombre, línea de posicionamiento y una selección corta de labs.
+ * Bienvenida (nombre, perfil y frase) y, debajo, una selección corta de
+ * labs.
  *
  * QUÉ labs y CUÁNTOS lo decide `getLabsHome()` en `src/lib/labs.ts`, no
  * esta página: acá no hay ningún `.slice()` ni ningún filtro. La regla
@@ -18,14 +19,47 @@ const { labs: labsHome, total, hayMas } = await getLabsHome();
 
 <Base
   titulo="Inicio"
-  descripcion="Portafolio de ciberseguridad defensiva: laboratorios de detección, DFIR y cumplimiento."
+  descripcion="Portafolio de ciberseguridad defensiva: laboratorios documentados con evidencia, la prueba de cada control y lo que salió mal."
 >
+  {/* Precarga de la fuente del nombre, SOLO en esta página (va al <head>
+      por el hueco `head` de Base.astro). Sin esto el navegador descubre
+      la fuente recién cuando ya armó la página y encontró el h1, y con
+      font-display: optional casi siempre llegaría tarde.
+
+      `crossorigin` NO sobra aunque la fuente sea del mismo sitio: las
+      fuentes se piden siempre en modo CORS, y una precarga sin ese
+      atributo no coincide con el pedido real, así que la fuente se
+      bajaría DOS veces. La ruta y el tipo tienen que ser idénticos a los
+      del @font-face de más abajo. */}
+  <link
+    slot="head"
+    rel="preload"
+    href="/fuentes/outfit-nombre.woff2"
+    as="font"
+    type="font/woff2"
+    crossorigin
+  />
+
   <div class="contenedor">
-    <section class="seccion presentacion">
-      <h1>Benjamin Achibury</h1>
-      <p class="presentacion__linea">
-        Estudiante de ingeniería en ciberseguridad. Construyo detecciones,
-        analizo incidentes y documento cada paso.
+    {/* BIENVENIDA.
+
+        SIN min-height: 100vh. Una bienvenida de pantalla completa empuja
+        los labs fuera de la vista, y tienen que asomar sin hacer scroll:
+        el rótulo LABS y el título del primer lab, visibles a 1366×657
+        (una pantalla de 1366×768 menos la barra del navegador). Si la
+        frase pasa de dos líneas en escritorio, vuelve a medir. */}
+    <section class="seccion bienvenida">
+      {/* El texto del h1 tiene que ser IGUAL al TEXTO de
+          scripts/generar-fuente.mjs: la fuente trae solo esas letras. Si
+          cambias el nombre, vuelve a correr ese script. */}
+      <h1 class="bienvenida__nombre">Benjamin Achibury</h1>
+
+      {/* Una sola línea también a 360px: a --t-md caben ~30 caracteres. */}
+      <p class="bienvenida__perfil">Ciberseguridad defensiva</p>
+
+      <p class="bienvenida__frase">
+        Estudiante de ingeniería en ciberseguridad. Publico lo que practico
+        en laboratorio, con la evidencia completa y también mis errores.
       </p>
     </section>
 
@@ -72,9 +106,138 @@ const { labs: labsHome, total, hayMas } = await getLabsHome();
 </Base>
 
 <style>
-  .presentacion__linea {
-    margin-top: var(--e-4);
+  /* --- El nombre animado: los tres números para afinar ---
+     El nombre pasa de fino a grueso una vez, al cargar la página.
+
+       --nombre-peso-inicial   el peso con que aparece
+       --nombre-peso-final     el peso en reposo (el que se queda)
+       --nombre-duracion       cuánto tarda en pasar de uno al otro
+
+     La fuente trae el eje de peso completo (100 a 900), así que cualquier
+     peso de ese rango funciona sin regenerarla. Pesos de Outfit, no de
+     Segoe UI: acá 500 y 650 SÍ existen, porque la fuente es variable.
+
+     Ojo: si cambias el peso inicial, hay que volver a medir
+     --nombre-espaciado-inicial (más abajo, con la animación). */
+  .bienvenida {
+    --nombre-peso-inicial: 100;
+    --nombre-peso-final: 700;
+    --nombre-duracion: 900ms;
+  }
+
+  /* --- La fuente del nombre ---
+     Outfit, recortada a las letras de "Benjamin Achibury" (3,9 KB). La
+     genera scripts/generar-fuente.mjs; ver "La fuente del nombre" en
+     docs/sistema-de-diseno.md.
+
+     `font-display: optional`: si la fuente no está lista en los primeros
+     ~100ms, el navegador usa la fuente de siempre durante toda esa
+     visita y NUNCA cambia a mitad de camino. Así no hay redibujo cuando
+     la fuente llega tarde. El costo es que en una red lenta, la primera
+     visita puede verse con la fuente del sistema; la siguiente ya la
+     tiene guardada.
+
+     `font-weight: 100 900` le dice al navegador que este único archivo
+     cubre todos los pesos: sin eso, trataría la fuente como si tuviera
+     uno solo y "falsificaría" los demás engrosando las letras. */
+  @font-face {
+    font-family: 'Outfit nombre';
+    src: url('/fuentes/outfit-nombre.woff2') format('woff2');
+    font-weight: 100 900;
+    font-display: optional;
+  }
+
+  /* SOLO el h1 del nombre usa Outfit; si no llega, cae en la fuente de
+     siempre (--fuente). El tamaño sale de la escala (--t-2xl, del h1 de
+     global.css): acá no se toca.
+
+     `letter-spacing: 0` anula el -0.015em que global.css les pone a
+     todos los encabezados. Ese valor está pensado para Segoe UI; con
+     Outfit junta las letras de más. El espaciado natural de Outfit es
+     el que queda en reposo. */
+  .bienvenida__nombre {
+    font-family: 'Outfit nombre', var(--fuente);
+    font-weight: var(--nombre-peso-final);
+    letter-spacing: 0;
+  }
+
+  /* UNA PALABRA POR LÍNEA EN PANTALLAS ANGOSTAS.
+
+     La animación cambia el ancho de las letras. Si el nombre queda justo
+     en el límite de lo que cabe en una línea, a mitad de la animación
+     salta de una línea a dos (o al revés) y todo lo de abajo se mueve.
+     Pasó en el prototipo: Archivo a 360px, aun compensando el espaciado,
+     porque un fotograma intermedio quedaba 3,6px más angosto.
+
+     `width: min-content` hace que el h1 mida lo que mide su palabra más
+     larga: el nombre va siempre en dos líneas, con cualquier ancho de
+     letra y con cualquier fuente (también con la de reserva, si Outfit
+     no llega). Desde 28rem (448px) siempre cabe en una: el nombre mide
+     ~310px y ahí quedan 400 de ancho útil. */
+  @media (max-width: 28rem) {
+    .bienvenida__nombre {
+      width: min-content;
+    }
+  }
+
+  /* --- La animación ---
+     Todo el movimiento está acá adentro: con "menos movimiento" pedido,
+     esta regla no existe y el nombre aparece directamente en reposo.
+
+     `backwards` y NO `both`: el estado inicial (fino y espaciado) se
+     aplica desde el primer cuadro, y al terminar la animación suelta el
+     elemento. Con `both` seguiría "sosteniendo" el último cuadro, y el
+     reposo dejaría de ser idénticamente el estado sin animación.
+
+     La curva arranca suave y frena al final. Con una más brusca el nombre
+     ya iba por peso 500 a los 100ms y el engrosamiento casi no se veía. */
+  @media (prefers-reduced-motion: no-preference) {
+    .bienvenida__nombre {
+      animation: nombre-grosor var(--nombre-duracion) cubic-bezier(0.4, 0, 0.2, 1) backwards;
+    }
+  }
+
+  /* COMPENSACIÓN DE ANCHO. Con el peso fino las letras son más
+     angostas. Si el espaciado inicial se elige para que el nombre mida lo
+     mismo al principio y al final, el nombre no "respira" de ancho
+     mientras engrosa. Medido en Chrome con el archivo real: ver el valor
+     y la medición en docs/sistema-de-diseno.md. Solo vale para
+     --nombre-peso-inicial: 100; si cambias ese peso, hay que volver a
+     medirlo. Existe solo durante la animación: el reposo es 0. */
+  .bienvenida__nombre {
+    --nombre-espaciado-inicial: 0.0309em;
+  }
+
+  @keyframes nombre-grosor {
+    from {
+      font-weight: var(--nombre-peso-inicial);
+      letter-spacing: var(--nombre-espaciado-inicial);
+    }
+  }
+
+  /* --- Bienvenida ---
+     Tres niveles, y cada uno baja un escalón de tamaño Y de color a la
+     vez, para que se lean como tres cosas distintas sin compararlas:
+
+       nombre   --t-2xl (36px)   --texto        17.85:1 claro / 14.48:1 oscuro
+       perfil   --t-md  (18px)   --texto-medio  10.35:1 claro /  9.77:1 oscuro
+       frase    --t-base (16px)  --texto-suave   7.58:1 claro /  6.96:1 oscuro
+
+     Contraste medido contra --fondo con la fórmula de WCAG; los tres
+     pasan de sobra el 4.5:1. Son tokens que ya existían: ni un color
+     nuevo.
+
+     El nombre y el perfil van pegados (8px) porque son una sola cosa,
+     "quién"; la frase se separa más. El ancho de lectura (70ch) ya lo
+     pone global.css a todo párrafo y encabezado dentro de <main>. */
+  .bienvenida__perfil {
+    margin-top: var(--e-2);
     font-size: var(--t-md);
+    color: var(--texto-medio);
+  }
+
+  .bienvenida__frase {
+    margin-top: var(--e-4);
     color: var(--texto-suave);
     text-wrap: pretty;
   }
