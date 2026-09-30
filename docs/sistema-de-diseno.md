@@ -54,6 +54,13 @@ del artículo. Ver "Tabla de contenidos de un lab" (`docs/tabla-de-contenidos.md
 Escala `--t-xs` … `--t-2xl` (12 / 14 / 16 / 18 / 21 / 28 / 36 px) más
 `--t-mono: 0.9em` para código.
 
+Por encima hay un paso más, **`--t-3xl` (48px)**, que **no** es para
+encabezados: lo usa solo el nombre de la home, y solo en escritorio (ver
+"La fuente del nombre"). Todos los `h1` del sitio siguen en `--t-2xl`.
+Sigue el ritmo de la parte alta de la escala: 21 → 28 → 36 → 48 crece
+~1,3 por paso. Se evaluó 44px (2.75rem), más discreto, y se eligió 48
+por no romper ese ritmo.
+
 Los saltos son amplios a propósito: si h2, h3 y cuerpo se diferencian poco,
 el ojo no los lee como tres niveles distintos sino como variaciones del mismo.
 
@@ -140,6 +147,32 @@ del sistema, durante toda esa visita, sin redibujo. Medido en Chrome:
 | Fuente retenida 2 s | Segoe UI, y se queda en Segoe UI aunque la fuente llegue | 0 |
 | Fuente bloqueada | Segoe UI | 0 |
 
+**El tamaño.** El nombre crece con el ancho de la pantalla, entre dos
+pasos de la escala: 36px (`--t-2xl`) en móvil y 48px (`--t-3xl`) en
+escritorio.
+
+```css
+font-size: clamp(var(--t-2xl), var(--t-xl) + 1.7857vw, var(--t-3xl));
+```
+
+`clamp(mínimo, preferido, máximo)` usa el valor del medio, pero nunca
+menos que el primero ni más que el último. El del medio está calculado
+para que el crecimiento empiece en 28rem (448px, donde termina la regla
+de una palabra por línea) y termine en 70rem (1120px, el ancho máximo del
+contenedor): a 448px da 28 + 8 = 36, y a 1120px, 28 + 20 = 48. El 28 es
+`--t-xl`, así que los tres valores salen de la escala.
+
+| Ancho de pantalla | Tamaño | Líneas | El nombre mide / espacio útil |
+| --- | --- | --- | --- |
+| 360 a 440px | 36px | 2 | "Achibury" 148,5px / 312 a 392 |
+| 460px | 36,2px | 1 | 312px / 412 |
+| 768px | 41,7px | 1 | 360px / 720 |
+| 1366px | 48px | 1 | 414px / 1072 |
+
+Por qué creció: con 36px el nombre, que es la presentación del sitio,
+apenas se despegaba de los títulos de los labs (21px). En móvil no
+cambia: ahí ya ocupa dos líneas y el espacio vertical es lo escaso.
+
 **El espaciado.** Outfit va con `letter-spacing: 0`, su espaciado
 natural. El `-0.015em` que `global.css` les pone a los encabezados está
 pensado para Segoe UI; con Outfit juntaba las letras de más (el nombre
@@ -156,15 +189,20 @@ no son obvias:
 - **Compensación de ancho.** Con peso fino las letras son más angostas.
   El espaciado arranca en **0.0309em** (medido en Chrome con el archivo
   real) para que el nombre mida lo mismo al principio y al final, y
-  termina en 0. Durante el camino queda hasta **4,45px** más angosto,
-  porque el ancho no crece en línea recta con el peso. Vale solo para el
-  peso inicial 100: si lo cambias, hay que volver a medirlo (con 300 era
-  0.0245em).
+  termina en 0. Durante el camino queda algo más angosto, porque el
+  ancho no crece en línea recta con el peso: hasta **4,45px** a 36px y
+  **5,94px** a 48px (crece en proporción con la letra). Como está en
+  `em`, el valor no depende del tamaño: medido, da 0.0309em a 36, a 41,7
+  y a 48px. Vale solo para el peso inicial 100: si lo cambias, hay que
+  volver a medirlo (con 300 era 0.0245em).
 - **Una palabra por línea bajo 28rem** (`width: min-content`). Sin esto,
   un nombre justo en el límite de lo que cabe salta de una a dos líneas
   a mitad de la animación y empuja todo lo de abajo. Pasó en el
   prototipo. Con la regla, el nombre va siempre en dos líneas en
-  pantallas angostas, también con la fuente de reserva.
+  pantallas angostas, también con la fuente de reserva. El corte en
+  28rem sigue sirviendo con el tamaño creciente: justo por encima, a
+  460px, la versión más ancha (fuente de reserva, a mitad de animación)
+  mide 326px de 412 disponibles.
 - **`backwards` y no `both`.** Al terminar, la animación suelta el
   elemento. El reposo es **idéntico píxel a píxel** al estado sin
   animación: medido en Chrome y en Firefox, claro y oscuro, a 360 y
@@ -173,7 +211,8 @@ no son obvias:
   solo tiene los pesos de la tabla de arriba: el nombre engrosa a saltos
   en vez de gradualmente. Termina igual de quieto y sin mover nada:
   medido con la fuente bloqueada, el alto del nombre no cambia en ningún
-  cuadro a 360, 390, 414, 440, 460 ni 1366px.
+  cuadro a 360, 390, 414, 440, 460, 768 ni 1366px (y con Outfit
+  tampoco, en los mismos anchos).
 
 ### Jerarquía por varias señales
 

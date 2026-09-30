@@ -73,6 +73,12 @@
   --t-lg: 1.3125rem; /* h3 */
   --t-xl: 1.75rem; /* h2 */
   --t-2xl: 2.25rem; /* h1 */
+  /* Solo el nombre de la home, y solo en escritorio: crece de --t-2xl
+     hacia este paso con un clamp() en index.astro. Sigue el ritmo de la
+     parte alta de la escala (21 -> 28 -> 36 -> 48 crece ~1,3 por paso).
+     No es un h1 más grande para todo el sitio: los h1 de las demás
+     páginas siguen en --t-2xl. */
+  --t-3xl: 3rem;
 
   /* Código. Va en em (no en rem) para que se adapte al contexto donde
      esté. Las monoespaciadas se ven más grandes que una sans al mismo

@@ -35,7 +35,8 @@ fino a grueso una vez al cargar (ver "La fuente del nombre",
 `docs/sistema-de-diseno.md`), y debajo el perfil ("Ciberseguridad
 defensiva") y una frase de dos líneas en escritorio. Si cambias el
 largo de la frase, vuelve a medir que el título del primer lab siga
-visible a 1366×657: hoy queda en 449 → 475.
+visible a 1366×657: hoy queda en 464 → 490. El nombre mide
+36px en móvil y crece hasta 48px (`--t-3xl`) en escritorio.
 
 **La bienvenida no lleva monograma grande ni enlace a los labs, a
 propósito.** Los dos se construyeron y se quitaron: el monograma

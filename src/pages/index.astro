@@ -148,8 +148,24 @@ const { labs: labsHome, total, hayMas } = await getLabsHome();
   }
 
   /* SOLO el h1 del nombre usa Outfit; si no llega, cae en la fuente de
-     siempre (--fuente). El tamaño sale de la escala (--t-2xl, del h1 de
-     global.css): acá no se toca.
+     siempre (--fuente).
+
+     EL TAMAÑO crece con el ancho de la pantalla, entre dos pasos de la
+     escala: --t-2xl (36px, el de todos los h1) en móvil y --t-3xl (48px)
+     en escritorio. Es la presentación del sitio y con 36px apenas se
+     despegaba de los títulos de los labs.
+
+     clamp(mínimo, preferido, máximo): el navegador usa el del medio,
+     pero nunca menos que el primero ni más que el último. El del medio
+     está calculado para que el crecimiento vaya de 28rem (448px, donde
+     termina la regla de "una palabra por línea") a 70rem (1120px, el
+     ancho máximo del contenedor):
+
+       a  448px:  28 + 1.7857 × 4.48  = 28 +  8 = 36px  (--t-2xl)
+       a 1120px:  28 + 1.7857 × 11.2  = 28 + 20 = 48px  (--t-3xl)
+
+     El 28 es --t-xl, así que los tres valores salen de la escala. Por
+     debajo de 448px queda en 36, como antes: en móvil no crece.
 
      `letter-spacing: 0` anula el -0.015em que global.css les pone a
      todos los encabezados. Ese valor está pensado para Segoe UI; con
@@ -157,6 +173,7 @@ const { labs: labsHome, total, hayMas } = await getLabsHome();
      el que queda en reposo. */
   .bienvenida__nombre {
     font-family: 'Outfit nombre', var(--fuente);
+    font-size: clamp(var(--t-2xl), var(--t-xl) + 1.7857vw, var(--t-3xl));
     font-weight: var(--nombre-peso-final);
     letter-spacing: 0;
   }
@@ -172,8 +189,10 @@ const { labs: labsHome, total, hayMas } = await getLabsHome();
      `width: min-content` hace que el h1 mida lo que mide su palabra más
      larga: el nombre va siempre en dos líneas, con cualquier ancho de
      letra y con cualquier fuente (también con la de reserva, si Outfit
-     no llega). Desde 28rem (448px) siempre cabe en una: el nombre mide
-     ~310px y ahí quedan 400 de ancho útil. */
+     no llega). Desde 28rem (448px) siempre cabe en una: ahí el nombre
+     mide ~310px y quedan 400 de ancho útil. El nombre crece con la
+     pantalla (ver el clamp() de arriba), pero más lento que el espacio
+     disponible: a 768px mide ~360px de 720, y a 1366px, 414 de 1072. */
   @media (max-width: 28rem) {
     .bienvenida__nombre {
       width: min-content;
